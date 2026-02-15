@@ -4,11 +4,8 @@ FROM node:22-alpine AS base
 FROM base AS deps
 WORKDIR /app
 
-# Add python + build tools for any native deps that slip in
-RUN apk add --no-cache python3 make g++
-
 COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts && npm rebuild
+RUN npm ci
 
 # Rebuild the source code only when needed
 FROM base AS builder
