@@ -1,11 +1,14 @@
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
 WORKDIR /app
 
+# Add python + build tools for any native deps that slip in
+RUN apk add --no-cache python3 make g++
+
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts && npm rebuild
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -17,7 +20,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
 
-# Production image
+# Production image — minimal
 FROM base AS runner
 WORKDIR /app
 
