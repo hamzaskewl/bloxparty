@@ -1,16 +1,19 @@
 "use client";
 
-import { Suspense, useEffect, useState, useRef } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import Link from "next/link";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import type { Event } from "@/lib/db/schema";
+import { Nav } from "@/components/Nav";
 
 const AUDIUS_HOST =
   process.env.NEXT_PUBLIC_AUDIUS_API_HOST ||
   "https://discoveryprovider.audius.co";
+
+const MC_SERVER_IP =
+  process.env.NEXT_PUBLIC_MC_SERVER_IP || "play.deadathon.xyz";
 
 interface AudiusPlaylist {
   id: string;
@@ -35,18 +38,22 @@ function EventsContent() {
 
   return (
     <main className="min-h-screen px-4 pt-24 pb-16 max-w-5xl mx-auto">
-      <nav className="fixed top-0 left-0 w-full flex items-center justify-between px-6 py-4 border-b border-neutral-800 bg-neutral-950/80 backdrop-blur-sm z-50">
-        <Link href="/" className="text-xl font-bold tracking-tight">
-          deadathon
-        </Link>
-        <WalletMultiButton />
-      </nav>
+      <Nav />
 
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Events</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Events</h1>
+          <p className="text-sm text-neutral-500 mt-1">
+            Browse or create blockchain-ticketed experiences
+          </p>
+        </div>
         <button
           onClick={() => setIsCreating(!isCreating)}
-          className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg font-medium transition-colors text-sm"
+          className={`px-6 py-2.5 rounded-xl font-medium text-sm transition-all ${
+            isCreating
+              ? "bg-neutral-900 hover:bg-neutral-800 border-2 border-neutral-700 hover:border-purple-500/40 text-neutral-300"
+              : "bg-purple-600 hover:bg-purple-500 text-white border-2 border-purple-700 shadow-md hover:shadow-lg hover:scale-[1.02]"
+          }`}
         >
           {isCreating ? "Browse Events" : "Create Event"}
         </button>
@@ -68,7 +75,6 @@ function CreateEventForm() {
   // Step 2: optional extras (shown after basics)
   const [description, setDescription] = useState("");
   const [maxTickets, setMaxTickets] = useState(100);
-  const [mcServerIp, setMcServerIp] = useState("");
   const [twitchChannel, setTwitchChannel] = useState("");
 
   // Step 3: Audius playlist picker
@@ -106,7 +112,7 @@ function CreateEventForm() {
           maxTickets,
           ticketPriceLamports: Math.floor(ticketPrice * 1e9),
           creatorWallet: publicKey.toBase58(),
-          mcServerIp: mcServerIp || undefined,
+          mcServerIp: MC_SERVER_IP,
           twitchChannel: twitchChannel || undefined,
           audiusPlaylistId: audiusPlaylistId || undefined,
         }),
@@ -176,7 +182,7 @@ function CreateEventForm() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Solana Concert Night"
-            className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-lg focus:outline-none focus:border-purple-500"
+            className="w-full px-3.5 py-2.5 bg-neutral-900 border-2 border-neutral-800 rounded-xl focus:outline-none focus:border-purple-500/50 transition-all text-sm"
           />
         </div>
 
@@ -190,14 +196,14 @@ function CreateEventForm() {
             onChange={(e) => setTicketPrice(Number(e.target.value))}
             step={0.01}
             min={0}
-            className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-lg focus:outline-none focus:border-purple-500"
+            className="w-full px-3.5 py-2.5 bg-neutral-900 border-2 border-neutral-800 rounded-xl focus:outline-none focus:border-purple-500/50 transition-all text-sm"
           />
         </div>
 
         <button
           onClick={() => name.trim() && setStep(2)}
           disabled={!name.trim()}
-          className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium transition-colors"
+          className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-medium transition-all text-sm border-2 border-purple-700 shadow-md hover:shadow-lg hover:scale-[1.02]"
         >
           Next
         </button>
@@ -211,9 +217,10 @@ function CreateEventForm() {
       <div className="max-w-lg space-y-4">
         <button
           onClick={() => setStep(1)}
-          className="text-sm text-neutral-400 hover:text-neutral-200"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-neutral-400 hover:text-white bg-neutral-900 hover:bg-neutral-800 border-2 border-neutral-800 hover:border-purple-500/40 transition-all"
         >
-          &larr; Back
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+          Back
         </button>
 
         <p className="text-sm text-neutral-500">
@@ -229,35 +236,21 @@ function CreateEventForm() {
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
             placeholder="What's this event about?"
-            className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-lg focus:outline-none focus:border-purple-500"
+            className="w-full px-3.5 py-2.5 bg-neutral-900 border-2 border-neutral-800 rounded-xl focus:outline-none focus:border-purple-500/50 transition-all text-sm"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-neutral-400 mb-1">
-              Max Tickets
-            </label>
-            <input
-              type="number"
-              value={maxTickets}
-              onChange={(e) => setMaxTickets(Number(e.target.value))}
-              min={1}
-              className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-lg focus:outline-none focus:border-purple-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-neutral-400 mb-1">
-              MC Server IP
-            </label>
-            <input
-              type="text"
-              value={mcServerIp}
-              onChange={(e) => setMcServerIp(e.target.value)}
-              placeholder="play.example.com"
-              className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-lg focus:outline-none focus:border-purple-500"
-            />
-          </div>
+        <div>
+          <label className="block text-sm text-neutral-400 mb-1">
+            Max Tickets
+          </label>
+          <input
+            type="number"
+            value={maxTickets}
+            onChange={(e) => setMaxTickets(Number(e.target.value))}
+            min={1}
+            className="w-full px-3.5 py-2.5 bg-neutral-900 border-2 border-neutral-800 rounded-xl focus:outline-none focus:border-purple-500/50 transition-all text-sm"
+          />
         </div>
 
         <div>
@@ -269,7 +262,7 @@ function CreateEventForm() {
             value={twitchChannel}
             onChange={(e) => setTwitchChannel(e.target.value)}
             placeholder="your_channel"
-            className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-lg focus:outline-none focus:border-purple-500"
+            className="w-full px-3.5 py-2.5 bg-neutral-900 border-2 border-neutral-800 rounded-xl focus:outline-none focus:border-purple-500/50 transition-all text-sm"
           />
         </div>
 
@@ -279,14 +272,14 @@ function CreateEventForm() {
               setStep(3);
               loadTrendingPlaylists();
             }}
-            className="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-500 rounded-lg font-medium transition-colors"
+            className="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl font-medium transition-all text-sm border-2 border-purple-700 shadow-md hover:shadow-lg hover:scale-[1.02]"
           >
             Add Music
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="flex-1 px-4 py-3 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded-lg font-medium transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-3 bg-neutral-900 hover:bg-neutral-800 border-2 border-neutral-700 hover:border-purple-500/40 rounded-xl font-medium transition-all disabled:opacity-50 text-sm"
           >
             {loading ? "Creating..." : "Skip & Create"}
           </button>
@@ -300,9 +293,10 @@ function CreateEventForm() {
     <div className="max-w-lg space-y-4">
       <button
         onClick={() => setStep(2)}
-        className="text-sm text-neutral-400 hover:text-neutral-200"
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-neutral-400 hover:text-white bg-neutral-900 hover:bg-neutral-800 border-2 border-neutral-800 hover:border-purple-500/40 transition-all"
       >
-        &larr; Back
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+        Back
       </button>
 
       <h2 className="text-lg font-semibold">Pick a Playlist from Audius</h2>
@@ -336,12 +330,12 @@ function CreateEventForm() {
             }
           }}
           placeholder="Search playlists..."
-          className="flex-1 px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-lg focus:outline-none focus:border-purple-500"
+          className="flex-1 px-3.5 py-2.5 bg-neutral-900 border-2 border-neutral-800 rounded-xl focus:outline-none focus:border-purple-500/50 transition-all text-sm"
         />
         <button
           onClick={() => searchPlaylists(playlistQuery)}
           disabled={searchingPlaylists}
-          className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-sm font-medium transition-colors"
+          className="px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 border-2 border-neutral-700 hover:border-purple-500/40 rounded-xl text-sm font-medium transition-all"
         >
           Search
         </button>
@@ -384,7 +378,7 @@ function CreateEventForm() {
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium transition-colors"
+        className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-medium transition-all text-sm border-2 border-purple-700 shadow-md hover:shadow-lg hover:scale-[1.02]"
       >
         {loading ? "Creating..." : "Create Event"}
       </button>
@@ -404,10 +398,10 @@ function PlaylistRow({
   return (
     <button
       onClick={onSelect}
-      className={`w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-colors ${
+      className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
         selected
-          ? "bg-purple-950/50 border-purple-700"
-          : "bg-neutral-900 border-neutral-800 hover:border-neutral-600"
+          ? "bg-purple-500/10 border-purple-500/30"
+          : "bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1]"
       }`}
     >
       {playlist.artwork?.["150x150"] ? (
@@ -484,38 +478,40 @@ function EventList() {
           <Link
             key={event.id}
             href={`/events/${event.id}`}
-            className="block p-5 bg-neutral-900 rounded-xl border border-neutral-800 hover:border-neutral-600 transition-colors"
+            className="group block p-5 rounded-2xl border-2 border-neutral-800 bg-neutral-900 shadow-sm hover:border-purple-500/40 hover:shadow-lg hover:shadow-purple-500/10 hover:-translate-y-1 transition-all duration-300"
           >
-            <h3 className="text-lg font-semibold mb-1">{event.name}</h3>
+            <div className="flex items-start justify-between mb-2">
+              <h3 className="text-lg font-semibold group-hover:text-white transition-colors">{event.name}</h3>
+              <span className="text-sm font-semibold text-purple-400 flex-shrink-0 ml-3">
+                {priceInSol} SOL
+              </span>
+            </div>
             {event.description && (
               <p className="text-sm text-neutral-400 mb-3 line-clamp-2">
                 {event.description}
               </p>
             )}
-            <div className="flex items-center gap-4 text-sm text-neutral-500">
-              <span>{priceInSol} SOL</span>
-              <span>
-                {remaining > 0
-                  ? `${remaining} tickets left`
-                  : "Sold out"}
+            <div className="flex items-center justify-between">
+              <div className="flex gap-1.5">
+                {event.mcServerIp && (
+                  <span className="text-[10px] px-2 py-0.5 bg-green-500/10 text-green-400 rounded-full border border-green-500/20 font-medium">
+                    Minecraft
+                  </span>
+                )}
+                {event.twitchChannel && (
+                  <span className="text-[10px] px-2 py-0.5 bg-purple-500/10 text-purple-400 rounded-full border border-purple-500/20 font-medium">
+                    Twitch
+                  </span>
+                )}
+                {event.audiusPlaylistId && (
+                  <span className="text-[10px] px-2 py-0.5 bg-pink-500/10 text-pink-400 rounded-full border border-pink-500/20 font-medium">
+                    Music
+                  </span>
+                )}
+              </div>
+              <span className={`text-xs font-medium ${remaining > 0 ? "text-neutral-500" : "text-red-400"}`}>
+                {remaining > 0 ? `${remaining} left` : "Sold out"}
               </span>
-            </div>
-            <div className="flex gap-2 mt-2">
-              {event.mcServerIp && (
-                <span className="text-xs px-2 py-0.5 bg-green-950 text-green-400 rounded">
-                  Minecraft
-                </span>
-              )}
-              {event.twitchChannel && (
-                <span className="text-xs px-2 py-0.5 bg-purple-950 text-purple-400 rounded">
-                  Twitch
-                </span>
-              )}
-              {event.audiusPlaylistId && (
-                <span className="text-xs px-2 py-0.5 bg-pink-950 text-pink-400 rounded">
-                  Music
-                </span>
-              )}
             </div>
           </Link>
         );

@@ -31,6 +31,8 @@ export interface StealthTransferParams {
   lamports: number;
   /** Sender's public key */
   senderPubkey: PublicKey;
+  /** Where SOL actually goes (event creator's wallet) */
+  paymentRecipient: PublicKey;
 }
 
 export interface StealthTransferResult {
@@ -38,8 +40,10 @@ export interface StealthTransferResult {
   transaction: Transaction;
   /** The one-time stealth address (base58) */
   stealthAddress: string;
-  /** The ephemeral public key R (base58) - published in memo */
+  /** The ephemeral public key R (base58) - published in memo (Ed25519) */
   ephemeralPubkey: string;
+  /** The ephemeral X25519 public key (base58) - used for ECDH scanning */
+  ephemeralX25519Pubkey: string;
 }
 
 /**
@@ -47,14 +51,14 @@ export interface StealthTransferResult {
  *
  * 1. Generate ephemeral keypair (r, R)
  * 2. Compute shared secret via ECDH
- * 3. Derive one-time stealth address
- * 4. Transfer SOL to stealth address
+ * 3. Derive one-time stealth address (proof-of-purchase identity)
+ * 4. Transfer SOL to the event creator (paymentRecipient)
  * 5. Attach memo with ephemeral public key R
  */
 export function buildStealthTransfer(
   params: StealthTransferParams
 ): StealthTransferResult {
-  const { recipientScanSeed, recipientSpendSeed, lamports, senderPubkey } =
+  const { recipientScanSeed, recipientSpendSeed, lamports, senderPubkey, paymentRecipient } =
     params;
 
   // 1. Generate ephemeral keypair
@@ -75,11 +79,12 @@ export function buildStealthTransfer(
   // 4. Build transaction: SOL transfer + memo
   const tx = new Transaction();
 
-  // Transfer SOL to the stealth address
+  // Transfer SOL to the event creator (not the stealth address)
+  // The stealth address is only used as proof-of-purchase identity
   tx.add(
     SystemProgram.transfer({
       fromPubkey: senderPubkey,
-      toPubkey: stealthPubkey,
+      toPubkey: paymentRecipient,
       lamports,
     })
   );
@@ -101,5 +106,6 @@ export function buildStealthTransfer(
     transaction: tx,
     stealthAddress: stealthPubkey.toBase58(),
     ephemeralPubkey: memoData,
+    ephemeralX25519Pubkey: bs58.encode(ephemeralX25519.publicKey),
   };
 }

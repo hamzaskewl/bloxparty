@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { events, tickets } from "@/lib/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 export async function POST(req: NextRequest) {
   try {
@@ -52,7 +52,14 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const { eventId, buyerWallet, txSignature } = await req.json();
+    const {
+      eventId,
+      buyerWallet,
+      txSignature,
+      isStealth,
+      stealthAddress,
+      ephemeralPubkey,
+    } = await req.json();
 
     if (!eventId || !buyerWallet || !txSignature) {
       return NextResponse.json(
@@ -81,6 +88,27 @@ export async function PUT(req: NextRequest) {
       );
     }
 
+    // For non-stealth purchases, check if this wallet already has a ticket
+    if (!isStealth) {
+      const existing = await db
+        .select()
+        .from(tickets)
+        .where(
+          and(
+            eq(tickets.eventId, eventId),
+            eq(tickets.buyerWallet, buyerWallet),
+            eq(tickets.isStealth, false)
+          )
+        );
+
+      if (existing.length > 0) {
+        return NextResponse.json(
+          { error: "You already have a ticket for this event" },
+          { status: 409 }
+        );
+      }
+    }
+
     // Record the ticket purchase
     const [ticket] = await db
       .insert(tickets)
@@ -88,6 +116,9 @@ export async function PUT(req: NextRequest) {
         eventId,
         buyerWallet,
         txSignature,
+        isStealth: isStealth || false,
+        stealthAddress: stealthAddress || null,
+        ephemeralPubkey: ephemeralPubkey || null,
       })
       .returning();
 
@@ -122,6 +153,40 @@ export async function PUT(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const eventId = req.nextUrl.searchParams.get("id");
+    const stealth = req.nextUrl.searchParams.get("stealth");
+    const walletCheck = req.nextUrl.searchParams.get("wallet");
+    const eventCheck = req.nextUrl.searchParams.get("eventId");
+
+    // Check if wallet has a ticket for an event
+    if (walletCheck && eventCheck) {
+      const existing = await db
+        .select()
+        .from(tickets)
+        .where(
+          and(
+            eq(tickets.eventId, eventCheck),
+            eq(tickets.buyerWallet, walletCheck)
+          )
+        );
+      return NextResponse.json({ hasTicket: existing.length > 0 });
+    }
+
+    // Return all stealth tickets (for scanner)
+    if (stealth === "true") {
+      const stealthTickets = await db
+        .select({
+          id: tickets.id,
+          eventId: tickets.eventId,
+          stealthAddress: tickets.stealthAddress,
+          ephemeralPubkey: tickets.ephemeralPubkey,
+          txSignature: tickets.txSignature,
+          purchasedAt: tickets.purchasedAt,
+        })
+        .from(tickets)
+        .where(eq(tickets.isStealth, true));
+
+      return NextResponse.json(stealthTickets);
+    }
 
     if (eventId) {
       const [event] = await db

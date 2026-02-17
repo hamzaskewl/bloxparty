@@ -34,6 +34,7 @@ export const tickets = pgTable("tickets", {
   txSignature: text("tx_signature"),
   isStealth: boolean("is_stealth").notNull().default(false),
   stealthAddress: text("stealth_address"),
+  ephemeralPubkey: text("ephemeral_pubkey"),
   mcUsername: text("mc_username"),
   isWhitelisted: boolean("is_whitelisted").notNull().default(false),
   isRedeemed: boolean("is_redeemed").notNull().default(false),
