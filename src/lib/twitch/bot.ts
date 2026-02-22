@@ -50,25 +50,25 @@ export async function sendMessage(
   await client.say(channel, message);
 }
 
-/** Announce a ticket purchase */
-export async function announceTicketPurchase(
+/** Announce a new event going live */
+export async function announceEventLive(
   channel: string,
-  remaining: number
+  eventName: string
 ): Promise<void> {
   await sendMessage(
     channel,
-    `Someone just grabbed a ticket! ${remaining} remaining.`
+    `${eventName} is now live! Join the Roblox experience and vibe with us.`
   );
 }
 
-/** Announce a player joining the MC server */
+/** Announce a player joining the Roblox experience */
 export async function announcePlayerJoin(
   channel: string,
   playerName: string
 ): Promise<void> {
   await sendMessage(
     channel,
-    `${playerName} just entered the Minecraft venue!`
+    `${playerName} just joined the experience!`
   );
 }
 
@@ -88,24 +88,31 @@ async function handleCommand(
       );
       break;
 
-    case "!tickets":
+    case "!discord":
       await sendMessage(
         channel,
-        "Visit the web app to check ticket availability and buy tickets."
+        "Join our Discord to get verified and access the Roblox experience!"
       );
       break;
 
-    case "!mc":
+    case "!roblox":
       await sendMessage(
         channel,
-        "Buy a ticket first, then link your Minecraft username on the web app to get whitelisted!"
+        "Get verified in Discord first, then join the Roblox experience. Link in channel description!"
+      );
+      break;
+
+    case "!song":
+      await sendMessage(
+        channel,
+        "Check the event page on our web app for the full playlist!"
       );
       break;
 
     case "!help":
       await sendMessage(
         channel,
-        "Commands: !event (event info) | !tickets (buy tickets) | !mc (Minecraft server info) | !help"
+        "Commands: !event (event info) | !discord (join Discord) | !roblox (join experience) | !song (current track) | !help"
       );
       break;
   }

@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Deadathon — Blockchain-Ticketed Minecraft Experiences",
+  title: "Deadathon — Token-Gated Creator Experiences on Roblox",
   description:
-    "Buy tickets on Solana. Join events in Minecraft. Hear real music from Audius. Virtual experiences, resurrected.",
+    "Token-gated creator experiences on Roblox. Powered by Audius and Solana. Discover concerts, verify with Discord, and join the experience live.",
 };
 
 export default function RootLayout({

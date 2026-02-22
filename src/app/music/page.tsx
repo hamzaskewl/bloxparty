@@ -186,7 +186,7 @@ export default function MusicPage() {
             <BackLink href="/" label="Home" />
             <h1 className="text-3xl font-bold">Music</h1>
             <p className="text-neutral-500 text-sm mt-1">
-              Powered by Audius — streams inside Minecraft via OpenAudioMC
+              Powered by Audius — discover and preview tracks for events
             </p>
           </div>
         </div>

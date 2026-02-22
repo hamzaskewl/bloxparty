@@ -23,9 +23,9 @@ export default function Home() {
             </span>
           </h1>
           <p className="text-lg md:text-xl text-neutral-400 mb-12 max-w-2xl mx-auto leading-relaxed">
-            Buy tickets on Solana. Join events in Minecraft. Hear real music
-            from Audius. Stream it all on Twitch. Virtual creator experiences,
-            brought back to life.
+            Token-gated creator experiences on Roblox. Powered by Audius and
+            Solana. Discover concerts, verify with Discord, and join the
+            experience live.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -56,20 +56,20 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-24">
           <StepCard
             step="1"
-            title="Buy a Ticket"
-            desc="Connect your Phantom wallet, pick an event, and pay with SOL. Toggle stealth mode for privacy."
+            title="Discover"
+            desc="Browse upcoming concerts and creator events. Listen to playlists, explore artist profiles."
             gradient="from-purple-500/20 to-transparent"
           />
           <StepCard
             step="2"
-            title="Join Minecraft"
-            desc="Link your MC username after purchase. You get whitelisted automatically — just connect."
+            title="Verify"
+            desc="Join our Discord. Collab.Land verifies your token holdings and grants access."
             gradient="from-pink-500/20 to-transparent"
           />
           <StepCard
             step="3"
-            title="Experience It Live"
-            desc="Walk to the concert stage and hear real Audius tracks via OpenAudioMC. Twitch bot keeps chat hyped."
+            title="Experience"
+            desc="Jump into Roblox and experience the concert live with curated music and the community."
             gradient="from-blue-500/20 to-transparent"
           />
         </div>
@@ -83,28 +83,28 @@ export default function Home() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-20">
           <FeatureCard
-            title="Solana Tickets"
-            description="SPL Token-2022 tickets with on-chain metadata. Pay with SOL, get a programmable token as your ticket."
+            title="Token-Gated Access"
+            description="Hold creator tokens to unlock exclusive experiences. Verified via Discord + Collab.Land."
             tag="Core"
-            icon={<TicketIcon />}
-          />
-          <FeatureCard
-            title="Stealth Purchases"
-            description="Custom DKSAP implementation with tweetnacl. One-time stealth addresses via ECDH keep your wallet hidden."
-            tag="Privacy"
             icon={<ShieldIcon />}
           />
           <FeatureCard
-            title="Minecraft Venues"
-            description="Token-gated Paper MC servers managed via ServerTap REST API. No mods needed — just connect and play."
+            title="Audius Integration"
+            description="Artist profiles, creator coins, supporter rankings, curated playlists. Deep Audius integration."
+            tag="Music"
+            icon={<MusicIcon />}
+          />
+          <FeatureCard
+            title="Roblox Experiences"
+            description="Immersive concert venues on Roblox. Pre-uploaded curated audio, community events."
             tag="Experience"
             icon={<CubeIcon />}
           />
           <FeatureCard
-            title="Audius + OpenAudioMC"
-            description="Real music from Audius streams inside the Minecraft venue. Walk to the concert stage to hear it live."
-            tag="Music"
-            icon={<MusicIcon />}
+            title="Discord Community"
+            description="One Discord server for all events. Token-gated roles, Roblox username linking, live chat."
+            tag="Social"
+            icon={<ChatIcon />}
           />
         </div>
 
@@ -116,12 +116,12 @@ export default function Home() {
           <div className="flex flex-wrap gap-2 justify-center">
             {[
               "Solana",
-              "SPL Token-2022",
               "Phantom",
               "Audius",
-              "Minecraft",
-              "OpenAudioMC",
-              "ServerTap",
+              "Roblox",
+              "Discord",
+              "Collab.Land",
+              "Spotify",
               "Twitch",
               "Next.js",
               "Railway",
@@ -146,10 +146,10 @@ export default function Home() {
               Browse Music
             </Link>
             <Link
-              href="/scan"
+              href="/events"
               className="px-6 py-3 bg-neutral-900 hover:bg-neutral-800 rounded-xl font-medium transition-all border-2 border-neutral-700 hover:border-purple-500/40"
             >
-              Stealth Scanner
+              View Events
             </Link>
           </div>
         </div>
@@ -214,15 +214,6 @@ function FeatureCard({
   );
 }
 
-function TicketIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
-      <path d="M13 5v2M13 17v2M13 11v2" />
-    </svg>
-  );
-}
-
 function ShieldIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -246,6 +237,14 @@ function MusicIcon() {
       <path d="M9 18V5l12-2v13" />
       <circle cx="6" cy="18" r="3" />
       <circle cx="18" cy="16" r="3" />
+    </svg>
+  );
+}
+
+function ChatIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
     </svg>
   );
 }

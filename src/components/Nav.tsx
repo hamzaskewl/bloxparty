@@ -7,7 +7,6 @@ import { WalletButton } from "./WalletButton";
 const NAV_LINKS = [
   { href: "/events", label: "Events" },
   { href: "/music", label: "Music" },
-  { href: "/scan", label: "Scanner" },
 ];
 
 export function Nav() {
