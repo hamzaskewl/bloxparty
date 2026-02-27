@@ -1,20 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:github.com)",
-      "WebFetch(domain:docs.usetapestry.dev)",
-      "WebFetch(domain:docs.realms.today)",
-      "Bash(npx create-next-app@latest:*)",
       "Bash(npm install:*)",
       "Bash(npx next build)",
-      "WebFetch(domain:docs.audius.org)",
-      "WebFetch(domain:openaudiomc.net)",
-      "WebFetch(domain:audiusproject.github.io)",
       "Bash(npm uninstall:*)",
       "Bash(npx drizzle-kit:*)",
-      "Bash(node -e:*)",
-      "Bash(DATABASE_URL=\"postgresql://postgres:MGgktUmzJwJVkSqEBQohDeRllwBzwaOh@switchback.proxy.rlwy.net:38191/railway\" node -e:*)",
-      "Bash(DATABASE_URL=\"postgresql://postgres:MGgktUmzJwJVkSqEBQohDeRllwBzwaOh@switchback.proxy.rlwy.net:38191/railway\" npx drizzle-kit push:*)"
+      "Bash(node -e:*)"
     ]
   }
 }
