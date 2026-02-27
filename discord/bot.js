@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { Client, GatewayIntentBits, Events, SlashCommandBuilder, REST, Routes, PermissionFlagsBits } = require("discord.js");
+const { Client, GatewayIntentBits, Events, SlashCommandBuilder, REST, Routes } = require("discord.js");
 
 // ─── Config ───
 const TOKEN = process.env.DISCORD_BOT_TOKEN;
@@ -12,6 +12,21 @@ if (!TOKEN || !CLIENT_ID) {
   process.exit(1);
 }
 
+// ─── Roblox username → userId lookup ───
+async function robloxUsernameToId(username) {
+  const res = await fetch("https://users.roblox.com/v1/usernames/users", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ usernames: [username], excludeBannedUsers: false }),
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  if (data.data && data.data.length > 0) {
+    return { id: String(data.data[0].id), name: data.data[0].name };
+  }
+  return null;
+}
+
 // ─── Register slash commands ───
 async function registerCommands() {
   const commands = [
@@ -19,7 +34,7 @@ async function registerCommands() {
       .setName("link")
       .setDescription("Link your Roblox account to get whitelisted for concerts")
       .addStringOption((opt) =>
-        opt.setName("roblox_user_id").setDescription("Your Roblox User ID (number from your profile URL)").setRequired(true)
+        opt.setName("roblox_username").setDescription("Your Roblox username").setRequired(true)
       ),
     new SlashCommandBuilder()
       .setName("status")
@@ -66,24 +81,24 @@ client.on(Events.InteractionCreate, async (interaction) => {
       });
     }
 
-    const robloxUserId = interaction.options.getString("roblox_user_id");
-
-    // Basic validation — should be a number
-    if (!/^\d+$/.test(robloxUserId)) {
-      return interaction.reply({
-        content: "That doesn't look like a valid Roblox User ID. It should be a number (e.g. `12345678`).\n\nFind yours at: https://www.roblox.com/users/profile → the number in the URL.",
-        ephemeral: true,
-      });
-    }
+    const robloxUsername = interaction.options.getString("roblox_username");
 
     await interaction.deferReply({ ephemeral: true });
+
+    // Look up Roblox user ID from username
+    const robloxUser = await robloxUsernameToId(robloxUsername);
+    if (!robloxUser) {
+      return interaction.editReply(
+        `Could not find a Roblox account named **${robloxUsername}**. Double-check the spelling and try again.`
+      );
+    }
 
     try {
       const res = await fetch(`${API_BASE}/api/roblox/whitelist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          robloxUserId,
+          robloxUserId: robloxUser.id,
           discordUserId: user.id,
         }),
       });
@@ -94,7 +109,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       }
 
       return interaction.editReply(
-        `You're in! Roblox ID \`${robloxUserId}\` has been whitelisted.\n\nYou can now join the Roblox concert experience.`
+        `You're in! **${robloxUser.name}** (ID: \`${robloxUser.id}\`) has been whitelisted.\n\nYou can now join the Roblox concert experience.`
       );
     } catch (err) {
       console.error("[Bot] Whitelist API error:", err);
@@ -115,7 +130,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         `Holder Role: ${hasRole ? "Yes" : "No — connect wallet in <#collabland-join>"}`,
         ``,
         hasRole
-          ? `Use \`/link <roblox_user_id>\` to whitelist your Roblox account.`
+          ? `Use \`/link <roblox_username>\` to whitelist your Roblox account.`
           : `Get the **${VERIFIED_ROLE_NAME}** role first, then link your Roblox account.`,
       ].join("\n")
     );

@@ -6,7 +6,7 @@ local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 
 -- Your deployed bloxparty API URL
-local API_BASE = "https://bloxparty.up.railway.app/" -- TODO: Replace with your actual URL
+local API_BASE = "https://bloxparty.up.railway.app" -- Your Railway app URL
 
 local function checkWhitelist(player)
 	local url = API_BASE .. "/api/roblox/verify?robloxUserId=" .. tostring(player.UserId)
