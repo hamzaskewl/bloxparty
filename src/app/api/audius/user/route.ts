@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 
     // Look up Audius user by associated Solana wallet
     const idRes = await fetch(
-      `${AUDIUS_HOST}/v1/users/id?associated_wallet=${wallet}&app_name=deadathon`
+      `${AUDIUS_HOST}/v1/users/id?associated_wallet=${wallet}&app_name=bloxparty`
     );
 
     if (!idRes.ok) {
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 
     // Fetch full user profile
     const userRes = await fetch(
-      `${AUDIUS_HOST}/v1/users/${userId}?app_name=deadathon`
+      `${AUDIUS_HOST}/v1/users/${userId}?app_name=bloxparty`
     );
 
     if (!userRes.ok) {

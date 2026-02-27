@@ -15,7 +15,7 @@ export async function initBot(config: TwitchBotConfig): Promise<tmi.Client> {
   client = new tmi.Client({
     options: { debug: false },
     identity: {
-      username: "deadathon_bot",
+      username: "bloxparty_bot",
       password: `oauth:${config.token}`,
     },
     channels: [config.channel],

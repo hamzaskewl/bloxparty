@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
 import Link from "next/link";
@@ -19,10 +19,21 @@ interface AudiusPlaylist {
   track_count: number;
 }
 
-interface AudiusArtist {
+interface AudiusTrackPreview {
+  id: string;
+  title: string;
+  duration?: number;
+  artwork?: { "150x150"?: string };
+  user: { name: string };
+}
+
+interface RecommendedArtist {
+  id: string;
   name: string;
   handle: string;
-  id: string;
+  profilePic?: string;
+  coinTicker?: string;
+  coinPrice?: number;
 }
 
 export default function EventsPage() {
@@ -53,8 +64,8 @@ function EventsContent() {
           onClick={() => setIsCreating(!isCreating)}
           className={`px-6 py-2.5 rounded-xl font-medium text-sm transition-all ${
             isCreating
-              ? "bg-neutral-900 hover:bg-neutral-800 border-2 border-neutral-700 hover:border-purple-500/40 text-neutral-300"
-              : "bg-purple-600 hover:bg-purple-500 text-white border-2 border-purple-700 shadow-md hover:shadow-lg hover:scale-[1.02]"
+              ? "glass text-neutral-300 hover:text-white"
+              : "bg-brand hover:bg-accent text-white shadow-md hover:shadow-lg hover:scale-[1.02]"
           }`}
         >
           {isCreating ? "Browse Events" : "Create Event"}
@@ -66,15 +77,46 @@ function EventsContent() {
   );
 }
 
+/* ─── Quick-date presets ─── */
+function getQuickDates() {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 20, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const saturday = new Date(today);
+  saturday.setDate(saturday.getDate() + ((6 - today.getDay() + 7) % 7 || 7));
+  const nextFriday = new Date(today);
+  nextFriday.setDate(nextFriday.getDate() + ((5 - today.getDay() + 7) % 7 || 7));
+  return [
+    { label: "Tonight", date: today },
+    { label: "Tomorrow", date: tomorrow },
+    { label: "This Saturday", date: saturday },
+    { label: "Next Friday", date: nextFriday },
+  ];
+}
+
+function toLocalDatetime(d: Date) {
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+/* ─── Create Event Form ─── */
 function CreateEventForm() {
   const { publicKey, connected } = useWallet();
-  const [step, setStep] = useState(1);
 
-  // Step 1: basics
+  // Form fields
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [eventDate, setEventDate] = useState("");
+  const [twitchChannel, setTwitchChannel] = useState("");
 
-  // Step 2: playlist
+  // Playlist
   const [playlistSource, setPlaylistSource] = useState<"audius" | "spotify">("audius");
   const [audiusPlaylistId, setAudiusPlaylistId] = useState("");
   const [selectedPlaylistName, setSelectedPlaylistName] = useState("");
@@ -84,17 +126,59 @@ function CreateEventForm() {
   const [searchingPlaylists, setSearchingPlaylists] = useState(false);
   const [spotifyPlaylistUrl, setSpotifyPlaylistUrl] = useState("");
 
-  // Step 3: optional extras
-  const [twitchChannel, setTwitchChannel] = useState("");
-  const [eventDate, setEventDate] = useState("");
-
-  // Audius artist auto-detection
-  const [audiusArtist, setAudiusArtist] = useState<AudiusArtist | null>(null);
+  // Artist
   const [audiusUserId, setAudiusUserId] = useState("");
+  const [selectedArtistName, setSelectedArtistName] = useState("");
+  const [walletArtistName, setWalletArtistName] = useState("");
+
+  // Auto-fetched artist tracks
+  const [artistTracks, setArtistTracks] = useState<AudiusTrackPreview[]>([]);
+  const [loadingTracks, setLoadingTracks] = useState(false);
+
+  // Recommended artists
+  const [recommended, setRecommended] = useState<RecommendedArtist[]>([]);
+  const [loadingRec, setLoadingRec] = useState(true);
 
   const [loading, setLoading] = useState(false);
+  const [showPlaylist, setShowPlaylist] = useState(false);
+  const [showExtras, setShowExtras] = useState(false);
 
-  // Auto-detect Audius artist when wallet is connected
+  // Fetch recommended/trending artists from coins
+  useEffect(() => {
+    async function fetchRecommended() {
+      try {
+        const res = await fetch(`${AUDIUS_HOST}/v1/coins?sort=market_cap&limit=12&app_name=bloxparty`);
+        if (!res.ok) return;
+        const json = await res.json();
+        const coins = json.data || [];
+        const artists: RecommendedArtist[] = [];
+        for (const coin of coins.slice(0, 8)) {
+          try {
+            const userRes = await fetch(`${AUDIUS_HOST}/v1/users/${coin.owner_id}?app_name=bloxparty`);
+            if (userRes.ok) {
+              const userData = await userRes.json();
+              const user = userData.data;
+              if (user) {
+                artists.push({
+                  id: user.id,
+                  name: user.name,
+                  handle: user.handle,
+                  profilePic: user.profile_picture?.["150x150"],
+                  coinTicker: coin.ticker,
+                  coinPrice: coin.price,
+                });
+              }
+            }
+          } catch { /* skip */ }
+        }
+        setRecommended(artists);
+      } catch { /* non-critical */ }
+      setLoadingRec(false);
+    }
+    fetchRecommended();
+  }, []);
+
+  // Auto-detect Audius artist from connected wallet
   useEffect(() => {
     if (!publicKey) return;
     async function detectArtist() {
@@ -103,30 +187,89 @@ function CreateEventForm() {
         if (res.ok) {
           const data = await res.json();
           if (data.user) {
-            setAudiusArtist({ name: data.user.name, handle: data.user.handle, id: data.user.id });
+            setWalletArtistName(data.user.name);
             setAudiusUserId(data.user.id);
+            setSelectedArtistName(data.user.name);
+            fetchArtistTracks(data.user.id);
           }
         }
-      } catch {
-        // Non-critical
-      }
+      } catch { /* Non-critical */ }
     }
     detectArtist();
   }, [publicKey]);
 
+  // Load trending playlists on mount
+  useEffect(() => {
+    async function loadTrending() {
+      try {
+        const res = await fetch(`${AUDIUS_HOST}/v1/playlists/trending?limit=6&app_name=bloxparty`);
+        if (res.ok) {
+          const data = await res.json();
+          setTrendingPlaylists(data.data || []);
+        }
+      } catch { /* non-critical */ }
+    }
+    loadTrending();
+  }, []);
+
+  async function fetchArtistTracks(userId: string) {
+    setLoadingTracks(true);
+    try {
+      const res = await fetch(`${AUDIUS_HOST}/v1/users/${userId}/tracks?limit=10&app_name=bloxparty`);
+      if (res.ok) {
+        const data = await res.json();
+        setArtistTracks(data.data || []);
+      }
+    } catch { /* non-critical */ }
+    setLoadingTracks(false);
+  }
+
+  const searchPlaylists = useCallback(async (q: string) => {
+    if (!q.trim()) return;
+    setSearchingPlaylists(true);
+    try {
+      const res = await fetch(
+        `${AUDIUS_HOST}/v1/playlists/search?query=${encodeURIComponent(q)}&limit=10&app_name=bloxparty`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setPlaylistResults(data.data || []);
+      }
+    } catch { /* Non-critical */ }
+    setSearchingPlaylists(false);
+  }, []);
+
   if (!connected) {
     return (
-      <div className="text-center py-16">
-        <p className="text-neutral-400 mb-4">
-          Connect your wallet to create an event.
-        </p>
+      <div className="text-center py-16 glass rounded-2xl">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-4 text-neutral-500">
+          <rect x="2" y="6" width="20" height="12" rx="2" />
+          <path d="M2 10h20" />
+        </svg>
+        <p className="text-neutral-400 mb-2">Connect your wallet to create an event.</p>
+        <p className="text-xs text-neutral-600">Your Solana wallet links to your Audius identity</p>
       </div>
     );
   }
 
+  function handleQuickFill(artist: RecommendedArtist) {
+    setAudiusUserId(artist.id);
+    setSelectedArtistName(artist.name);
+    setName(`${artist.name} Live Concert`);
+    setDescription(`Token-gated concert experience featuring ${artist.name} (@${artist.handle}) on Roblox.`);
+    fetchArtistTracks(artist.id);
+  }
+
+  function clearArtist() {
+    setAudiusUserId(walletArtistName ? "" : "");
+    setSelectedArtistName("");
+    setName("");
+    setDescription("");
+    setArtistTracks([]);
+  }
+
   async function handleSubmit() {
     if (!publicKey || !name.trim()) return;
-
     setLoading(true);
     try {
       const res = await fetch("/api/events", {
@@ -143,51 +286,14 @@ function CreateEventForm() {
           twitchChannel: twitchChannel || undefined,
         }),
       });
-
       if (!res.ok) throw new Error("Failed to create event");
-
       const event = await res.json();
       window.location.href = `/events/${event.id}`;
     } catch (err) {
       console.error("Failed to create event:", err);
       alert("Failed to create event. Check console for details.");
-    } finally {
-      setLoading(false);
     }
-  }
-
-  async function searchPlaylists(q: string) {
-    if (!q.trim()) return;
-    setSearchingPlaylists(true);
-    try {
-      const res = await fetch(
-        `${AUDIUS_HOST}/v1/playlists/search?query=${encodeURIComponent(q)}&limit=10`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setPlaylistResults(data.data || []);
-      }
-    } catch {
-      // Non-critical
-    } finally {
-      setSearchingPlaylists(false);
-    }
-  }
-
-  async function loadTrendingPlaylists() {
-    if (trendingPlaylists.length > 0) return;
-    setSearchingPlaylists(true);
-    try {
-      const res = await fetch(`${AUDIUS_HOST}/v1/playlists/trending?limit=10`);
-      if (res.ok) {
-        const data = await res.json();
-        setTrendingPlaylists(data.data || []);
-      }
-    } catch {
-      // Non-critical
-    } finally {
-      setSearchingPlaylists(false);
-    }
+    setLoading(false);
   }
 
   function selectPlaylist(playlist: AudiusPlaylist) {
@@ -195,256 +301,357 @@ function CreateEventForm() {
     setSelectedPlaylistName(playlist.playlist_name);
   }
 
-  // Step 1: Name + description
-  if (step === 1) {
-    return (
-      <div className="max-w-lg space-y-4">
-        {audiusArtist && (
-          <div className="p-3 bg-purple-950/50 border-2 border-purple-800 rounded-xl flex items-center gap-2">
-            <span className="text-sm text-purple-300">
-              Creating as <strong>{audiusArtist.name}</strong> on Audius
+  const quickDates = getQuickDates();
+  const isFilled = !!selectedArtistName;
+
+  return (
+    <div className="space-y-6">
+      {/* ─── Quick Fill: Pick a trending artist ─── */}
+      {!isFilled && (
+        <div className="glass rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-pop">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+            <h2 className="text-lg font-bold">Quick Fill</h2>
+            <span className="text-xs text-neutral-500 ml-1">Pick an artist to auto-fill everything</span>
+          </div>
+
+          {loadingRec ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-20 rounded-xl bg-white/5 animate-pulse" />
+              ))}
+            </div>
+          ) : recommended.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {recommended.map((artist) => (
+                <button
+                  key={artist.id}
+                  onClick={() => handleQuickFill(artist)}
+                  className="group flex items-center gap-3 p-3 rounded-xl glass-strong hover:bg-white/10 transition-all text-left"
+                >
+                  {artist.profilePic ? (
+                    <img src={artist.profilePic} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-brand/30 flex items-center justify-center flex-shrink-0 text-accent text-sm font-bold">
+                      {artist.name[0]}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold truncate group-hover:text-white transition-colors">{artist.name}</p>
+                    {artist.coinTicker && (
+                      <p className="text-[10px] text-accent font-mono truncate">${artist.coinTicker}</p>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-neutral-500">No trending artists found</p>
+          )}
+        </div>
+      )}
+
+      {/* ─── Event Form ─── */}
+      <div className="glass rounded-2xl p-5">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-lg font-bold">{isFilled ? "Almost there" : "Custom Event"}</h2>
+          {isFilled && (
+            <button
+              onClick={clearArtist}
+              className="text-xs text-neutral-500 hover:text-white transition-colors px-3 py-1 rounded-lg glass-strong"
+            >
+              Clear &amp; start over
+            </button>
+          )}
+        </div>
+        <p className="text-xs text-neutral-500 mb-5">
+          {isFilled
+            ? `Pre-filled for ${selectedArtistName} — edit anything below, then create.`
+            : "Fill in details manually for full control"}
+        </p>
+
+        {walletArtistName && !selectedArtistName && (
+          <div className="p-3 glass-strong rounded-xl flex items-center gap-2 mb-4">
+            <div className="w-2 h-2 rounded-full bg-accent" />
+            <span className="text-sm text-neutral-300">
+              Creating as <strong className="text-accent">{walletArtistName}</strong> on Audius
             </span>
           </div>
         )}
 
-        <div>
-          <label className="block text-sm text-neutral-400 mb-1">
-            Event Name
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Solana Concert Night"
-            className="w-full px-3.5 py-2.5 bg-neutral-900 border-2 border-neutral-800 rounded-xl focus:outline-none focus:border-purple-500/50 transition-all text-sm"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm text-neutral-400 mb-1">
-            Description
-          </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-            placeholder="What's this event about?"
-            className="w-full px-3.5 py-2.5 bg-neutral-900 border-2 border-neutral-800 rounded-xl focus:outline-none focus:border-purple-500/50 transition-all text-sm"
-          />
-        </div>
-
-        <button
-          onClick={() => {
-            if (name.trim()) {
-              setStep(2);
-              loadTrendingPlaylists();
-            }
-          }}
-          disabled={!name.trim()}
-          className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-medium transition-all text-sm border-2 border-purple-700 shadow-md hover:shadow-lg hover:scale-[1.02]"
-        >
-          Next: Add Music
-        </button>
-      </div>
-    );
-  }
-
-  // Step 2: Playlist — Audius or Spotify
-  if (step === 2) {
-    return (
-      <div className="max-w-lg space-y-4">
-        <button
-          onClick={() => setStep(1)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-neutral-400 hover:text-white bg-neutral-900 hover:bg-neutral-800 border-2 border-neutral-800 hover:border-purple-500/40 transition-all"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-          Back
-        </button>
-
-        <h2 className="text-lg font-semibold">Add a Playlist</h2>
-
-        {/* Source toggle */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => setPlaylistSource("audius")}
-            className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border-2 ${
-              playlistSource === "audius"
-                ? "bg-purple-600 border-purple-700 text-white"
-                : "bg-neutral-900 border-neutral-800 text-neutral-400 hover:border-purple-500/40"
-            }`}
-          >
-            Audius
-          </button>
-          <button
-            onClick={() => setPlaylistSource("spotify")}
-            className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border-2 ${
-              playlistSource === "spotify"
-                ? "bg-green-600 border-green-700 text-white"
-                : "bg-neutral-900 border-neutral-800 text-neutral-400 hover:border-green-500/40"
-            }`}
-          >
-            Spotify
-          </button>
-        </div>
-
-        {playlistSource === "audius" ? (
-          <>
-            {selectedPlaylistName && (
-              <div className="p-3 bg-purple-950/50 border-2 border-purple-800 rounded-xl flex items-center justify-between">
-                <span className="text-sm text-purple-300">
-                  Selected: <strong>{selectedPlaylistName}</strong>
-                </span>
-                <button
-                  onClick={() => {
-                    setAudiusPlaylistId("");
-                    setSelectedPlaylistName("");
-                  }}
-                  className="text-xs text-neutral-400 hover:text-neutral-200"
-                >
-                  Clear
-                </button>
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={playlistQuery}
-                onChange={(e) => setPlaylistQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    searchPlaylists(playlistQuery);
-                  }
-                }}
-                placeholder="Search playlists..."
-                className="flex-1 px-3.5 py-2.5 bg-neutral-900 border-2 border-neutral-800 rounded-xl focus:outline-none focus:border-purple-500/50 transition-all text-sm"
-              />
-              <button
-                onClick={() => searchPlaylists(playlistQuery)}
-                disabled={searchingPlaylists}
-                className="px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 border-2 border-neutral-700 hover:border-purple-500/40 rounded-xl text-sm font-medium transition-all"
-              >
-                Search
-              </button>
-            </div>
-
-            {searchingPlaylists && (
-              <p className="text-sm text-neutral-500">Searching...</p>
-            )}
-
-            {playlistResults.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs text-neutral-500">Search Results</p>
-                {playlistResults.map((pl) => (
-                  <PlaylistRow
-                    key={pl.id}
-                    playlist={pl}
-                    selected={audiusPlaylistId === pl.id}
-                    onSelect={() => selectPlaylist(pl)}
-                  />
-                ))}
-              </div>
-            )}
-
-            {playlistResults.length === 0 && trendingPlaylists.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs text-neutral-500">Trending on Audius</p>
-                {trendingPlaylists.map((pl) => (
-                  <PlaylistRow
-                    key={pl.id}
-                    playlist={pl}
-                    selected={audiusPlaylistId === pl.id}
-                    onSelect={() => selectPlaylist(pl)}
-                  />
-                ))}
-              </div>
-            )}
-          </>
-        ) : (
+        <div className="space-y-4">
+          {/* Name */}
           <div>
-            <label className="block text-sm text-neutral-400 mb-1">
-              Spotify Playlist URL
-            </label>
+            <label className="block text-sm text-neutral-400 mb-1.5">Event Name</label>
             <input
-              type="url"
-              value={spotifyPlaylistUrl}
-              onChange={(e) => setSpotifyPlaylistUrl(e.target.value)}
-              placeholder="https://open.spotify.com/playlist/..."
-              className="w-full px-3.5 py-2.5 bg-neutral-900 border-2 border-neutral-800 rounded-xl focus:outline-none focus:border-green-500/50 transition-all text-sm"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Solana Concert Night"
+              className="w-full px-3.5 py-2.5 glass-strong rounded-xl focus:outline-none focus:ring-1 focus:ring-accent/50 transition-all text-sm placeholder:text-neutral-600"
             />
-            {spotifyPlaylistUrl && (
-              <p className="text-xs text-green-400 mt-1.5">Spotify playlist linked</p>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm text-neutral-400 mb-1.5">Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+              placeholder="What's this event about?"
+              className="w-full px-3.5 py-2.5 glass-strong rounded-xl focus:outline-none focus:ring-1 focus:ring-accent/50 transition-all text-sm placeholder:text-neutral-600 resize-none"
+            />
+          </div>
+
+          {/* Date — quick picks + manual */}
+          <div>
+            <label className="block text-sm text-neutral-400 mb-1.5">When</label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {quickDates.map((qd) => (
+                <button
+                  key={qd.label}
+                  type="button"
+                  onClick={() => setEventDate(toLocalDatetime(qd.date))}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    eventDate === toLocalDatetime(qd.date)
+                      ? "bg-accent text-white"
+                      : "glass-strong text-neutral-400 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  {qd.label}
+                </button>
+              ))}
+            </div>
+            <input
+              type="datetime-local"
+              value={eventDate}
+              onChange={(e) => setEventDate(e.target.value)}
+              className="w-full px-3.5 py-2.5 glass-strong rounded-xl focus:outline-none focus:ring-1 focus:ring-accent/50 transition-all text-sm [color-scheme:dark]"
+            />
+          </div>
+
+          {/* Artist selection (only if not already filled) */}
+          {!isFilled && recommended.length > 0 && (
+            <div>
+              <label className="block text-sm text-neutral-400 mb-1.5">Featured Artist</label>
+              <div className="flex flex-wrap gap-2">
+                {recommended.slice(0, 6).map((artist) => (
+                  <button
+                    key={artist.id}
+                    type="button"
+                    onClick={() => handleQuickFill(artist)}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg glass-strong text-xs font-medium text-neutral-400 hover:text-white hover:bg-white/10 transition-all"
+                  >
+                    {artist.profilePic ? (
+                      <img src={artist.profilePic} alt="" className="w-4 h-4 rounded-full" />
+                    ) : (
+                      <div className="w-4 h-4 rounded-full bg-brand/30 flex items-center justify-center text-[8px] text-accent font-bold">{artist.name[0]}</div>
+                    )}
+                    {artist.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Auto-fetched artist tracks preview */}
+          {loadingTracks && (
+            <div className="p-4 glass-strong rounded-xl">
+              <p className="text-sm text-neutral-500 animate-pulse">Fetching tracks...</p>
+            </div>
+          )}
+
+          {artistTracks.length > 0 && (
+            <div className="glass-strong rounded-xl overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-white/5 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold">{selectedArtistName}&apos;s Top Tracks</p>
+                  <p className="text-[10px] text-neutral-500">Auto-fetched from Audius &middot; {artistTracks.length} tracks</p>
+                </div>
+                <span className="text-[10px] px-2 py-0.5 bg-accent/10 text-accent rounded-full font-medium">Auto</span>
+              </div>
+              <div className="p-2 space-y-0.5 max-h-[280px] overflow-y-auto">
+                {artistTracks.map((track, i) => (
+                  <div
+                    key={track.id}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
+                  >
+                    <span className="text-[10px] text-neutral-600 w-4 text-right flex-shrink-0">{i + 1}</span>
+                    {track.artwork?.["150x150"] ? (
+                      <img src={track.artwork["150x150"]} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center flex-shrink-0">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-neutral-600">
+                          <path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" />
+                        </svg>
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm truncate">{track.title}</p>
+                    </div>
+                    {track.duration && (
+                      <span className="text-[10px] text-neutral-600 flex-shrink-0">{formatDuration(track.duration)}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ─── Expandable: Add/Override Playlist ─── */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowPlaylist(!showPlaylist)}
+              className="inline-flex items-center gap-2 text-sm text-neutral-400 hover:text-white transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${showPlaylist ? "rotate-90" : ""}`}>
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+              {artistTracks.length > 0 ? "Override with a specific playlist" : "Add a playlist"}
+              {selectedPlaylistName && <span className="text-accent text-xs ml-1">({selectedPlaylistName})</span>}
+            </button>
+
+            {showPlaylist && (
+              <div className="mt-3 space-y-3 pl-1">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPlaylistSource("audius")}
+                    className={`flex-1 px-4 py-2 rounded-xl text-xs font-medium transition-all ${
+                      playlistSource === "audius"
+                        ? "bg-brand text-white"
+                        : "glass-strong text-neutral-400 hover:text-white"
+                    }`}
+                  >
+                    Audius
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPlaylistSource("spotify")}
+                    className={`flex-1 px-4 py-2 rounded-xl text-xs font-medium transition-all ${
+                      playlistSource === "spotify"
+                        ? "bg-green-600 text-white"
+                        : "glass-strong text-neutral-400 hover:text-white"
+                    }`}
+                  >
+                    Spotify
+                  </button>
+                </div>
+
+                {playlistSource === "audius" ? (
+                  <>
+                    {selectedPlaylistName && (
+                      <div className="p-3 glass-strong rounded-xl flex items-center justify-between">
+                        <span className="text-sm text-accent">
+                          Selected: <strong>{selectedPlaylistName}</strong>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => { setAudiusPlaylistId(""); setSelectedPlaylistName(""); }}
+                          className="text-xs text-neutral-500 hover:text-white transition-colors"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={playlistQuery}
+                        onChange={(e) => setPlaylistQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            searchPlaylists(playlistQuery);
+                          }
+                        }}
+                        placeholder="Search playlists..."
+                        className="flex-1 px-3.5 py-2 glass-strong rounded-xl focus:outline-none focus:ring-1 focus:ring-accent/50 transition-all text-sm placeholder:text-neutral-600"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => searchPlaylists(playlistQuery)}
+                        disabled={searchingPlaylists}
+                        className="px-4 py-2 glass-strong hover:bg-white/10 rounded-xl text-sm font-medium transition-all"
+                      >
+                        Search
+                      </button>
+                    </div>
+                    {searchingPlaylists && <p className="text-sm text-neutral-500">Searching...</p>}
+                    {(playlistResults.length > 0 ? playlistResults : trendingPlaylists).length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-neutral-500">
+                          {playlistResults.length > 0 ? "Search Results" : "Trending on Audius"}
+                        </p>
+                        {(playlistResults.length > 0 ? playlistResults : trendingPlaylists).map((pl) => (
+                          <PlaylistRow
+                            key={pl.id}
+                            playlist={pl}
+                            selected={audiusPlaylistId === pl.id}
+                            onSelect={() => selectPlaylist(pl)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div>
+                    <input
+                      type="url"
+                      value={spotifyPlaylistUrl}
+                      onChange={(e) => setSpotifyPlaylistUrl(e.target.value)}
+                      placeholder="https://open.spotify.com/playlist/..."
+                      className="w-full px-3.5 py-2.5 glass-strong rounded-xl focus:outline-none focus:ring-1 focus:ring-green-500/50 transition-all text-sm placeholder:text-neutral-600"
+                    />
+                    {spotifyPlaylistUrl && (
+                      <p className="text-xs text-green-400 mt-1.5">Spotify playlist linked</p>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
           </div>
-        )}
 
-        <div className="flex gap-2">
-          <button
-            onClick={() => setStep(3)}
-            className="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl font-medium transition-all text-sm border-2 border-purple-700 shadow-md hover:shadow-lg hover:scale-[1.02]"
-          >
-            Next
-          </button>
+          {/* ─── Expandable: Extra options ─── */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowExtras(!showExtras)}
+              className="inline-flex items-center gap-2 text-sm text-neutral-400 hover:text-white transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${showExtras ? "rotate-90" : ""}`}>
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+              {showExtras ? "Hide extra options" : "More options (Twitch, etc.)"}
+            </button>
+            {showExtras && (
+              <div className="mt-3 pl-1">
+                <label className="block text-sm text-neutral-400 mb-1.5">Twitch Channel</label>
+                <input
+                  type="text"
+                  value={twitchChannel}
+                  onChange={(e) => setTwitchChannel(e.target.value)}
+                  placeholder="your_channel"
+                  className="w-full px-3.5 py-2.5 glass-strong rounded-xl focus:outline-none focus:ring-1 focus:ring-accent/50 transition-all text-sm placeholder:text-neutral-600"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Submit */}
           <button
             onClick={handleSubmit}
-            disabled={loading}
-            className="flex-1 px-4 py-3 bg-neutral-900 hover:bg-neutral-800 border-2 border-neutral-700 hover:border-purple-500/40 rounded-xl font-medium transition-all disabled:opacity-50 text-sm"
+            disabled={loading || !name.trim()}
+            className="w-full px-4 py-3 bg-brand hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-bold transition-all text-sm shadow-md hover:shadow-lg hover:scale-[1.01]"
           >
-            {loading ? "Creating..." : "Skip & Create"}
+            {loading ? "Creating..." : "Create Event"}
           </button>
         </div>
       </div>
-    );
-  }
-
-  // Step 3: Optional extras (twitch, date)
-  return (
-    <div className="max-w-lg space-y-4">
-      <button
-        onClick={() => setStep(2)}
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-neutral-400 hover:text-white bg-neutral-900 hover:bg-neutral-800 border-2 border-neutral-800 hover:border-purple-500/40 transition-all"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-        Back
-      </button>
-
-      <p className="text-sm text-neutral-500">
-        Optional — add extra details or just create the event.
-      </p>
-
-      <div>
-        <label className="block text-sm text-neutral-400 mb-1">
-          Event Date & Time
-        </label>
-        <input
-          type="datetime-local"
-          value={eventDate}
-          onChange={(e) => setEventDate(e.target.value)}
-          className="w-full px-3.5 py-2.5 bg-neutral-900 border-2 border-neutral-800 rounded-xl focus:outline-none focus:border-purple-500/50 transition-all text-sm"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm text-neutral-400 mb-1">
-          Twitch Channel
-        </label>
-        <input
-          type="text"
-          value={twitchChannel}
-          onChange={(e) => setTwitchChannel(e.target.value)}
-          placeholder="your_channel"
-          className="w-full px-3.5 py-2.5 bg-neutral-900 border-2 border-neutral-800 rounded-xl focus:outline-none focus:border-purple-500/50 transition-all text-sm"
-        />
-      </div>
-
-      <button
-        onClick={handleSubmit}
-        disabled={loading}
-        className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-medium transition-all text-sm border-2 border-purple-700 shadow-md hover:shadow-lg hover:scale-[1.02]"
-      >
-        {loading ? "Creating..." : "Create Event"}
-      </button>
     </div>
   );
 }
@@ -461,34 +668,26 @@ function PlaylistRow({
   return (
     <button
       onClick={onSelect}
-      className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all ${
+      className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
         selected
-          ? "bg-purple-500/10 border-purple-500/30"
-          : "bg-neutral-900 border-neutral-800 hover:bg-neutral-800 hover:border-purple-500/20"
+          ? "glass-strong bg-accent/10 ring-1 ring-accent/30"
+          : "glass hover:bg-white/5"
       }`}
     >
       {playlist.artwork?.["150x150"] ? (
-        <img
-          src={playlist.artwork["150x150"]}
-          alt=""
-          className="w-10 h-10 rounded object-cover flex-shrink-0"
-        />
+        <img src={playlist.artwork["150x150"]} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
       ) : (
-        <div className="w-10 h-10 rounded bg-neutral-800 flex items-center justify-center flex-shrink-0">
-          <span className="text-neutral-600">&#9835;</span>
+        <div className="w-10 h-10 rounded bg-white/5 flex items-center justify-center flex-shrink-0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-neutral-600">
+            <path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" />
+          </svg>
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-sm truncate">
-          {playlist.playlist_name}
-        </p>
-        <p className="text-xs text-neutral-400 truncate">
-          {playlist.user.name} &middot; {playlist.track_count} tracks
-        </p>
+        <p className="font-medium text-sm truncate">{playlist.playlist_name}</p>
+        <p className="text-xs text-neutral-500 truncate">{playlist.user.name} &middot; {playlist.track_count} tracks</p>
       </div>
-      {selected && (
-        <span className="text-xs text-purple-400 flex-shrink-0">Selected</span>
-      )}
+      {selected && <span className="text-xs text-accent flex-shrink-0 font-medium">Selected</span>}
     </button>
   );
 }
@@ -501,9 +700,7 @@ function EventList() {
     async function fetchEvents() {
       try {
         const res = await fetch("/api/events");
-        if (res.ok) {
-          setEvents(await res.json());
-        }
+        if (res.ok) setEvents(await res.json());
       } catch (err) {
         console.error("Failed to fetch events:", err);
       } finally {
@@ -523,10 +720,15 @@ function EventList() {
 
   if (events.length === 0) {
     return (
-      <div className="text-center py-16">
-        <p className="text-neutral-400">
-          No events yet. Create the first one!
-        </p>
+      <div className="text-center py-16 glass rounded-2xl">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-4 text-neutral-500">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+        <p className="text-neutral-400 mb-1">No events yet</p>
+        <p className="text-xs text-neutral-600">Create the first one!</p>
       </div>
     );
   }
@@ -537,7 +739,7 @@ function EventList() {
         <Link
           key={event.id}
           href={`/events/${event.id}`}
-          className="group block p-5 rounded-2xl border-2 border-neutral-800 bg-neutral-900 shadow-sm hover:border-purple-500/40 hover:shadow-lg hover:shadow-purple-500/10 hover:-translate-y-1 transition-all duration-300"
+          className="group block p-5 rounded-2xl glass hover:bg-white/5 hover:-translate-y-1 transition-all duration-300"
         >
           <div className="flex items-start justify-between mb-2">
             <h3 className="text-lg font-semibold group-hover:text-white transition-colors">{event.name}</h3>
@@ -546,23 +748,15 @@ function EventList() {
             </span>
           </div>
           {event.description && (
-            <p className="text-sm text-neutral-400 mb-3 line-clamp-2">
-              {event.description}
-            </p>
+            <p className="text-sm text-neutral-400 mb-3 line-clamp-2">{event.description}</p>
           )}
           <div className="flex gap-1.5">
-            <span className="text-[10px] px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded-full border border-blue-500/20 font-medium">
-              Roblox
-            </span>
+            <span className="text-[10px] px-2 py-0.5 bg-accent/10 text-accent rounded-full border border-accent/20 font-medium">Roblox</span>
             {(event.audiusPlaylistId || event.spotifyPlaylistUrl) && (
-              <span className="text-[10px] px-2 py-0.5 bg-pink-500/10 text-pink-400 rounded-full border border-pink-500/20 font-medium">
-                Music
-              </span>
+              <span className="text-[10px] px-2 py-0.5 bg-pop/10 text-pop rounded-full border border-pop/20 font-medium">Music</span>
             )}
             {event.twitchChannel && (
-              <span className="text-[10px] px-2 py-0.5 bg-purple-500/10 text-purple-400 rounded-full border border-purple-500/20 font-medium">
-                Live
-              </span>
+              <span className="text-[10px] px-2 py-0.5 bg-brand/10 text-accent rounded-full border border-brand/20 font-medium">Live</span>
             )}
           </div>
         </Link>

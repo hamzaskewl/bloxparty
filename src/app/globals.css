@@ -1,42 +1,66 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --deep: #1C0770;
+  --brand: #261CC1;
+  --accent: #3A9AFF;
+  --pop: #F1FF5E;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-deep: var(--deep);
+  --color-brand: var(--brand);
+  --color-accent: var(--accent);
+  --color-pop: var(--pop);
+  --font-sans: var(--font-istok);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-istok), Arial, Helvetica, sans-serif;
 }
 
-@keyframes shimmer {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+/* Glass utility */
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.glass-strong {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.glass-nav {
+  background: rgba(10, 10, 10, 0.92);
+  backdrop-filter: blur(48px) saturate(1.6);
+  -webkit-backdrop-filter: blur(48px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
 }
 
-/* Glow effects */
-.glow-purple {
-  box-shadow: 0 0 40px -10px rgba(168, 85, 247, 0.4);
+/* Scroll reveal */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
 }
-.glow-purple-sm {
-  box-shadow: 0 0 20px -5px rgba(168, 85, 247, 0.25);
+[data-reveal].revealed {
+  opacity: 1;
+  transform: translateY(0);
 }
+[data-reveal][data-delay="1"] { transition-delay: 0.1s; }
+[data-reveal][data-delay="2"] { transition-delay: 0.2s; }
+[data-reveal][data-delay="3"] { transition-delay: 0.3s; }
+[data-reveal][data-delay="4"] { transition-delay: 0.4s; }
 
 /* Smooth scrollbar */
 ::-webkit-scrollbar {

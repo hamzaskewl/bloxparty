@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Nav, BackLink } from "@/components/Nav";
 
 interface AudiusTrack {
   id: string;
   title: string;
-  user: { name: string; handle: string };
+  user: { id: string; name: string; handle: string };
   artwork?: { "150x150"?: string; "480x480"?: string };
   duration: number;
   play_count: number;
@@ -76,7 +77,7 @@ export default function MusicPage() {
     setActiveTab("search");
     try {
       const res = await fetch(
-        `${AUDIUS_HOST}/v1/tracks/search?query=${encodeURIComponent(query)}&limit=50&app_name=deadathon`
+        `${AUDIUS_HOST}/v1/tracks/search?query=${encodeURIComponent(query)}&limit=50&app_name=bloxparty`
       );
       if (res.ok) {
         const data = await res.json();
@@ -98,7 +99,7 @@ export default function MusicPage() {
         ? `&genre=${encodeURIComponent(genre)}`
         : "";
       const res = await fetch(
-        `${AUDIUS_HOST}/v1/tracks/trending?time=allTime&limit=50&app_name=deadathon${genreParam}`
+        `${AUDIUS_HOST}/v1/tracks/trending?time=allTime&limit=50&app_name=bloxparty${genreParam}`
       );
       if (res.ok) {
         const data = await res.json();
@@ -122,7 +123,7 @@ export default function MusicPage() {
     if (audioRef.current) audioRef.current.pause();
 
     const audio = new Audio(
-      `${AUDIUS_HOST}/v1/tracks/${track.id}/stream?app_name=deadathon`
+      `${AUDIUS_HOST}/v1/tracks/${track.id}/stream?app_name=bloxparty`
     );
     audio.volume = volume;
     audio.play();
@@ -199,12 +200,12 @@ export default function MusicPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search artists, tracks..."
-              className="flex-1 px-4 py-2.5 bg-neutral-900 border-2 border-neutral-800 rounded-xl focus:outline-none focus:border-purple-500/50 focus:bg-neutral-800 transition-all text-sm"
+              className="flex-1 px-4 py-2.5 bg-neutral-900 border-2 border-neutral-800 rounded-xl focus:outline-none focus:border-accent/50 focus:bg-neutral-800 transition-all text-sm"
             />
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 rounded-xl font-medium transition-all text-sm border-2 border-purple-700 shadow-md hover:shadow-lg hover:scale-[1.02]"
+              className="px-5 py-2.5 bg-brand hover:bg-accent disabled:opacity-50 rounded-xl font-medium transition-all text-sm border-2 border-brand shadow-md hover:shadow-lg hover:scale-[1.02]"
             >
               Search
             </button>
@@ -212,7 +213,7 @@ export default function MusicPage() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortBy)}
-            className="px-3 py-2.5 bg-neutral-900 border-2 border-neutral-800 rounded-xl text-sm text-neutral-300 focus:outline-none focus:border-purple-500/50 transition-all"
+            className="px-3 py-2.5 bg-neutral-900 border-2 border-neutral-800 rounded-xl text-sm text-neutral-300 focus:outline-none focus:border-accent/50 transition-all"
           >
             <option value="default">Trending</option>
             <option value="plays">Most Plays</option>
@@ -226,8 +227,8 @@ export default function MusicPage() {
             onClick={() => loadTrending()}
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
               activeTab === "trending"
-                ? "bg-purple-600 text-white shadow-sm border-2 border-purple-700"
-                : "bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200 border-2 border-neutral-800 hover:border-purple-500/40"
+                ? "bg-brand text-white shadow-sm border-2 border-brand"
+                : "bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200 border-2 border-neutral-800 hover:border-accent/40"
             }`}
           >
             All Trending
@@ -238,8 +239,8 @@ export default function MusicPage() {
               onClick={() => loadTrending(genre)}
               className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
                 selectedGenre === genre
-                  ? "bg-purple-600 text-white shadow-sm border-2 border-purple-700"
-                  : "bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200 border-2 border-neutral-800 hover:border-purple-500/40"
+                  ? "bg-brand text-white shadow-sm border-2 border-brand"
+                  : "bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200 border-2 border-neutral-800 hover:border-accent/40"
               }`}
             >
               {genre}
@@ -249,7 +250,7 @@ export default function MusicPage() {
 
         {loading && (
           <div className="flex items-center justify-center py-16 gap-2">
-            <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
+            <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
             <p className="text-neutral-400 text-sm">Loading tracks...</p>
           </div>
         )}
@@ -280,21 +281,21 @@ export default function MusicPage() {
               onClick={() => playTrack(track)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all cursor-pointer group ${
                 playingTrackId === track.id
-                  ? "bg-purple-950/40 border-2 border-purple-900/50"
+                  ? "bg-deep/40 border-2 border-brand/50"
                   : "hover:bg-neutral-900 border-2 border-transparent hover:border-neutral-800"
               }`}
             >
               {/* Number / playing indicator */}
               <span className={`w-8 text-right text-xs flex-shrink-0 ${
                 playingTrackId === track.id
-                  ? "text-purple-400 font-bold"
+                  ? "text-accent font-bold"
                   : "text-neutral-600"
               }`}>
                 {playingTrackId === track.id ? (
                   <span className="inline-flex gap-0.5 justify-end">
-                    <span className="w-0.5 h-3 bg-purple-400 rounded-full animate-pulse" />
-                    <span className="w-0.5 h-2 bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: "0.15s" }} />
-                    <span className="w-0.5 h-3.5 bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: "0.3s" }} />
+                    <span className="w-0.5 h-3 bg-accent rounded-full animate-pulse" />
+                    <span className="w-0.5 h-2 bg-accent rounded-full animate-pulse" style={{ animationDelay: "0.15s" }} />
+                    <span className="w-0.5 h-3.5 bg-accent rounded-full animate-pulse" style={{ animationDelay: "0.3s" }} />
                   </span>
                 ) : (
                   i + 1
@@ -317,12 +318,18 @@ export default function MusicPage() {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <p className={`text-sm font-medium truncate ${
-                  playingTrackId === track.id ? "text-purple-300" : ""
+                  playingTrackId === track.id ? "text-accent" : ""
                 }`}>
                   {track.title}
                 </p>
                 <p className="text-xs text-neutral-500 truncate">
-                  {track.user.name}
+                  <Link
+                    href={`/artists/${track.user.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="hover:text-accent transition-colors"
+                  >
+                    {track.user.name}
+                  </Link>
                   {track.genre && (
                     <span className="text-neutral-700"> / {track.genre}</span>
                   )}
@@ -343,7 +350,7 @@ export default function MusicPage() {
               <span className="w-16 text-right flex-shrink-0">
                 <span className={`text-xs px-2.5 py-1 rounded-lg font-semibold transition-all ${
                   playingTrackId === track.id
-                    ? "bg-purple-600 text-white border border-purple-700"
+                    ? "bg-brand text-white border border-brand"
                     : "bg-transparent text-transparent group-hover:bg-neutral-800 group-hover:text-neutral-300 group-hover:border group-hover:border-neutral-700"
                 }`}>
                   {playingTrackId === track.id ? "Playing" : "Play"}
@@ -363,7 +370,7 @@ export default function MusicPage() {
             onClick={handleSeek}
           >
             <div
-              className="h-full bg-purple-500 group-hover:bg-purple-400 transition-colors relative"
+              className="h-full bg-accent group-hover:bg-accent/80 transition-colors relative"
               style={{ width: duration ? `${(progress / duration) * 100}%` : "0%" }}
             >
               <span className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -389,7 +396,12 @@ export default function MusicPage() {
                   {playingTrack.title}
                 </p>
                 <p className="text-xs text-neutral-500 truncate">
-                  {playingTrack.user.name}
+                  <Link
+                    href={`/artists/${playingTrack.user.id}`}
+                    className="hover:text-accent transition-colors"
+                  >
+                    {playingTrack.user.name}
+                  </Link>
                 </p>
               </div>
             </div>
@@ -425,7 +437,7 @@ export default function MusicPage() {
                   step="0.01"
                   value={volume}
                   onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                  className="w-20 h-1 accent-purple-500 cursor-pointer"
+                  className="w-20 h-1 accent-[#3A9AFF] cursor-pointer"
                 />
               </div>
             </div>

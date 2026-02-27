@@ -2,7 +2,7 @@ const API_HOST =
   process.env.NEXT_PUBLIC_AUDIUS_API_HOST ||
   "https://discoveryprovider.audius.co";
 
-const APP_NAME = "deadathon";
+const APP_NAME = "bloxparty";
 
 export interface AudiusTrack {
   id: string;
@@ -51,10 +51,21 @@ export interface Coin {
   mint: string;
   ticker: string;
   name: string;
+  owner_id: string;
+  logo_uri?: string;
   price: number;
-  market_cap: number;
-  holder_count: number;
+  marketCap?: number;
+  market_cap?: number;
+  holder?: number;
+  holder_count?: number;
+  v24hUSD?: number;
   volume_24h?: number;
+  priceChange24hPercent?: number;
+  totalSupply?: number;
+  circulatingSupply?: number;
+  trade24h?: number;
+  buy24h?: number;
+  sell24h?: number;
 }
 
 export interface CoinMember {
@@ -142,6 +153,15 @@ export async function getConnectedWallets(userId: string): Promise<{ sol: string
 export async function getSupporters(userId: string, limit = 10): Promise<Supporter[]> {
   try {
     return await audiusFetch<Supporter[]>(`/users/${userId}/supporters`, { limit: limit.toString() });
+  } catch {
+    return [];
+  }
+}
+
+/** Search for Audius users by name */
+export async function searchUsers(query: string, limit = 10): Promise<AudiusUser[]> {
+  try {
+    return await audiusFetch<AudiusUser[]>("/users/search", { query, limit: limit.toString() });
   } catch {
     return [];
   }

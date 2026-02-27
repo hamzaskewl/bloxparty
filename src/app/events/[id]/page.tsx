@@ -11,7 +11,7 @@ const AUDIUS_HOST =
   "https://discoveryprovider.audius.co";
 
 const DISCORD_INVITE =
-  process.env.NEXT_PUBLIC_DISCORD_INVITE || "https://discord.gg/deadathon";
+  process.env.NEXT_PUBLIC_DISCORD_INVITE || "https://discord.gg/bloxparty";
 
 const ROBLOX_PLACE_ID =
   process.env.NEXT_PUBLIC_ROBLOX_PLACE_ID || "";
@@ -26,18 +26,53 @@ interface AudiusArtistProfile {
   track_count: number;
 }
 
+interface CoinData {
+  mint: string;
+  ticker: string;
+  name: string;
+  price: number;
+  owner_id?: string;
+  marketCap?: number;
+  holder?: number;
+  v24hUSD?: number;
+  priceChange24hPercent?: number;
+}
+
+function formatPrice(price: number): string {
+  if (price >= 1) return `$${price.toFixed(2)}`;
+  if (price >= 0.01) return `$${price.toFixed(4)}`;
+  const str = price.toFixed(20);
+  const match = str.match(/^0\.(0+)/);
+  if (!match) return `$${price.toFixed(4)}`;
+  const zeroCount = match[1].length;
+  if (zeroCount <= 2) return `$${price.toFixed(4)}`;
+  const significantDigits = str.slice(2 + zeroCount, 2 + zeroCount + 4);
+  const subscripts = "₀₁₂₃₄₅₆₇₈₉";
+  const sub = String(zeroCount).split("").map((d) => subscripts[parseInt(d)]).join("");
+  return `$0.0${sub}${significantDigits}`;
+}
+
+function formatNumber(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return n.toFixed(0);
+}
+
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
 
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // Artist profile from Audius
   const [artist, setArtist] = useState<AudiusArtistProfile | null>(null);
-
-  // Audius playlist
+  const [coin, setCoin] = useState<CoinData | null>(null);
   const [playlistTracks, setPlaylistTracks] = useState<
-    { id: string; title: string; user: { name: string }; duration?: number }[]
+    { id: string; title: string; user: { name: string }; duration?: number; artwork?: { "150x150"?: string } }[]
   >([]);
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
   const [activeAudio, setActiveAudio] = useState<HTMLAudioElement | null>(null);
@@ -53,30 +88,44 @@ export default function EventDetailPage() {
         const data = await res.json();
         setEvent(data);
 
-        // Fetch Audius artist profile
         if (data.audiusUserId) {
-          try {
-            const artistRes = await fetch(
-              `${AUDIUS_HOST}/v1/users/${data.audiusUserId}?app_name=deadathon`
-            );
-            if (artistRes.ok) {
-              const artistData = await artistRes.json();
-              setArtist(artistData.data || null);
-            }
-          } catch {
-            // Non-critical
-          }
+          const [artistData, coinsData] = await Promise.all([
+            fetch(`${AUDIUS_HOST}/v1/users/${data.audiusUserId}?app_name=bloxparty`)
+              .then((r) => (r.ok ? r.json() : { data: null })),
+            fetch(`${AUDIUS_HOST}/v1/coins?app_name=bloxparty&limit=100`)
+              .then((r) => (r.ok ? r.json() : { data: [] })),
+          ]);
+
+          if (artistData.data) setArtist(artistData.data);
+
+          const allCoins = coinsData.data || [];
+          const artistCoin = allCoins.find(
+            (c: CoinData) => c.owner_id === data.audiusUserId
+          );
+          if (artistCoin) setCoin(artistCoin);
         }
 
-        // Fetch Audius playlist tracks
         if (data.audiusPlaylistId) {
           try {
             const playlistRes = await fetch(
-              `${AUDIUS_HOST}/v1/playlists/${data.audiusPlaylistId}/tracks?app_name=deadathon`
+              `${AUDIUS_HOST}/v1/playlists/${data.audiusPlaylistId}/tracks?app_name=bloxparty`
             );
             if (playlistRes.ok) {
               const playlistData = await playlistRes.json();
               setPlaylistTracks(playlistData.data || []);
+            }
+          } catch {
+            // Non-critical
+          }
+        } else if (data.audiusUserId) {
+          // Fallback: fetch artist's top tracks as the playlist
+          try {
+            const tracksRes = await fetch(
+              `${AUDIUS_HOST}/v1/users/${data.audiusUserId}/tracks?limit=10&app_name=bloxparty`
+            );
+            if (tracksRes.ok) {
+              const tracksData = await tracksRes.json();
+              setPlaylistTracks(tracksData.data || []);
             }
           } catch {
             // Non-critical
@@ -100,7 +149,7 @@ export default function EventDetailPage() {
     if (activeAudio) activeAudio.pause();
 
     const audio = new Audio(
-      `${AUDIUS_HOST}/v1/tracks/${trackId}/stream?app_name=deadathon`
+      `${AUDIUS_HOST}/v1/tracks/${trackId}/stream?app_name=bloxparty`
     );
     audio.play();
     audio.onended = () => {
@@ -111,17 +160,11 @@ export default function EventDetailPage() {
     setActiveAudio(audio);
   }
 
-  function formatDuration(seconds: number): string {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  }
-
   if (loading) {
     return (
       <main className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
+        <div className="flex items-center gap-3">
+          <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           <p className="text-neutral-400">Loading event...</p>
         </div>
       </main>
@@ -132,255 +175,317 @@ export default function EventDetailPage() {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center gap-4">
         <p className="text-neutral-400">Event not found.</p>
-        <Link
-          href="/events"
-          className="text-sm text-purple-400 hover:text-purple-300"
-        >
-          Browse events
-        </Link>
+        <Link href="/events" className="text-sm text-accent hover:text-accent">Browse events</Link>
       </main>
     );
   }
 
-  // Extract Spotify embed URL if present
   const spotifyEmbedUrl = event.spotifyPlaylistUrl
     ? event.spotifyPlaylistUrl.replace("open.spotify.com/", "open.spotify.com/embed/")
     : null;
 
+  const change = coin?.priceChange24hPercent || 0;
+
   return (
-    <main className="min-h-screen px-4 pt-24 pb-16 max-w-3xl mx-auto">
+    <main className="min-h-screen">
       <Nav />
-      <BackLink href="/events" label="Events" />
 
-      {/* Header */}
-      <h1 className="text-4xl font-bold mb-2">{event.name}</h1>
-      {event.description && (
-        <p className="text-neutral-400 mb-2 text-lg">{event.description}</p>
-      )}
-      <p className="text-sm text-neutral-500 mb-6">
-        {new Date(event.date).toLocaleDateString(undefined, {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })}
-      </p>
+      {/* Hero Banner */}
+      <div className="bg-deep/30 pt-24 pb-8 px-4">
+        <div className="max-w-7xl mx-auto">
+          <BackLink href="/events" label="Events" />
 
-      {/* Artist Card */}
-      {artist && (
-        <div className="p-5 rounded-2xl border-2 border-purple-800 bg-purple-950/30 shadow-sm mb-6 flex items-center gap-4">
-          {artist.profile_picture?.["150x150"] ? (
-            <img
-              src={artist.profile_picture["150x150"]}
-              alt={artist.name}
-              className="w-14 h-14 rounded-full object-cover flex-shrink-0"
-            />
-          ) : (
-            <div className="w-14 h-14 rounded-full bg-purple-900 flex items-center justify-center flex-shrink-0">
-              <span className="text-purple-400 text-xl font-bold">
-                {artist.name[0]}
-              </span>
-            </div>
-          )}
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold text-lg">{artist.name}</p>
-            <p className="text-sm text-purple-300">@{artist.handle}</p>
-            <div className="flex gap-4 mt-1">
-              <span className="text-xs text-neutral-400">
-                {artist.follower_count.toLocaleString()} followers
-              </span>
-              <span className="text-xs text-neutral-400">
-                {artist.track_count} tracks
-              </span>
-            </div>
-          </div>
-          <a
-            href={`https://audius.co/${artist.handle}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-xl text-sm font-medium transition-all border-2 border-purple-700 flex-shrink-0"
-          >
-            Audius
-          </a>
-        </div>
-      )}
+          <div className="flex flex-col md:flex-row items-start gap-6 mt-4">
+            {/* Artist avatar */}
+            {artist && (
+              <div className="flex-shrink-0">
+                {artist.profile_picture?.["480x480"] ? (
+                  <img
+                    src={artist.profile_picture["480x480"]}
+                    alt={artist.name}
+                    className="w-28 h-28 md:w-36 md:h-36 rounded-2xl object-cover shadow-2xl shadow-deep/30"
+                    loading="eager"
+                  />
+                ) : (
+                  <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl bg-deep flex items-center justify-center shadow-2xl">
+                    <span className="text-accent text-4xl font-bold">{artist.name[0]}</span>
+                  </div>
+                )}
+              </div>
+            )}
 
-      {/* Info Cards */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <a
-          href={DISCORD_INVITE}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="p-4 rounded-xl border-2 border-indigo-800 bg-indigo-950/30 shadow-sm hover:border-indigo-600 transition-all group"
-        >
-          <p className="text-xs text-neutral-500 mb-1">Discord</p>
-          <p className="text-sm font-medium text-indigo-300 group-hover:text-indigo-200 transition-colors">
-            Join our server
-          </p>
-        </a>
-        {ROBLOX_PLACE_ID && (
-          <a
-            href={`https://www.roblox.com/games/${ROBLOX_PLACE_ID}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-4 rounded-xl border-2 border-green-800 bg-green-950/30 shadow-sm hover:border-green-600 transition-all group"
-          >
-            <p className="text-xs text-neutral-500 mb-1">Roblox</p>
-            <p className="text-sm font-medium text-green-300 group-hover:text-green-200 transition-colors">
-              Join experience
-            </p>
-          </a>
-        )}
-        {event.twitchChannel && (
-          <a
-            href={`https://twitch.tv/${event.twitchChannel}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-4 rounded-xl border-2 border-purple-800 bg-purple-950/30 shadow-sm hover:border-purple-600 transition-all group"
-          >
-            <p className="text-xs text-neutral-500 mb-1">Twitch</p>
-            <p className="text-sm font-medium text-purple-300 group-hover:text-purple-200 transition-colors">
-              twitch.tv/{event.twitchChannel}
-            </p>
-          </a>
-        )}
-      </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-3xl md:text-5xl font-bold tracking-tight">{event.name}</h1>
+              {event.description && (
+                <p className="text-neutral-400 text-lg mt-2 max-w-2xl">{event.description}</p>
+              )}
+              <p className="text-sm text-neutral-500 mt-2">
+                {new Date(event.date).toLocaleDateString(undefined, {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
 
-      {/* How to Join */}
-      <div className="p-6 rounded-2xl border-2 border-neutral-800 bg-neutral-900 shadow-sm mb-6">
-        <h2 className="font-semibold text-lg mb-4">How to Join</h2>
-        <div className="space-y-4">
-          <StepItem
-            number={1}
-            title="Hold the required creator token"
-            description="Make sure your Solana wallet holds the creator's token (Audius creator coin, SPL token, or NFT)."
-          />
-          <StepItem
-            number={2}
-            title="Join our Discord"
-            description="Collab.Land verifies your token holdings and assigns you a role."
-            action={
-              <a
-                href={DISCORD_INVITE}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-medium transition-all border border-indigo-700"
-              >
-                Join Discord
-              </a>
-            }
-          />
-          <StepItem
-            number={3}
-            title="Submit your Roblox username"
-            description="Use the bot or channel in Discord to submit your Roblox username for whitelisting."
-          />
-          <StepItem
-            number={4}
-            title="Join the Roblox experience"
-            description="Once whitelisted, join the Roblox experience and enjoy the concert."
-            action={
-              ROBLOX_PLACE_ID ? (
+              {artist && (
+                <div className="flex items-center gap-3 mt-4">
+                  <span className="text-sm text-neutral-400">Performing:</span>
+                  <Link
+                    href={`/artists/${event.audiusUserId}`}
+                    className="text-sm font-semibold text-accent hover:text-accent/80 transition-colors"
+                  >
+                    {artist.name}
+                  </Link>
+                  <span className="text-xs text-neutral-600">
+                    {artist.follower_count.toLocaleString()} followers
+                  </span>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-3 mt-5">
                 <a
-                  href={`https://www.roblox.com/games/${ROBLOX_PLACE_ID}`}
+                  href={DISCORD_INVITE}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex px-4 py-2 bg-green-600 hover:bg-green-500 rounded-lg text-sm font-medium transition-all border border-green-700"
+                  className="px-5 py-2.5 bg-brand hover:bg-accent rounded-xl text-sm font-semibold transition-all border border-brand"
                 >
-                  Open Roblox
+                  Join Discord
                 </a>
-              ) : undefined
-            }
-          />
+                {ROBLOX_PLACE_ID && (
+                  <a
+                    href={`https://www.roblox.com/games/${ROBLOX_PLACE_ID}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-5 py-2.5 bg-green-600 hover:bg-green-500 rounded-xl text-sm font-semibold transition-all border border-green-500"
+                  >
+                    Open Roblox
+                  </a>
+                )}
+                {event.twitchChannel && (
+                  <a
+                    href={`https://twitch.tv/${event.twitchChannel}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-5 py-2.5 bg-brand hover:bg-accent rounded-xl text-sm font-semibold transition-all border border-brand"
+                  >
+                    Watch on Twitch
+                  </a>
+                )}
+                {artist && (
+                  <a
+                    href={`https://audius.co/${artist.handle}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-5 py-2.5 bg-neutral-800 hover:bg-neutral-700 rounded-xl text-sm font-semibold transition-all border border-neutral-700"
+                  >
+                    Audius Profile
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Audius Playlist */}
-      {playlistTracks.length > 0 && (
-        <div className="p-6 rounded-2xl border-2 border-neutral-800 bg-neutral-900 shadow-sm mb-6">
-          <h2 className="font-semibold mb-1">Event Playlist</h2>
-          <p className="text-xs text-neutral-500 mb-3">
-            Powered by Audius
-          </p>
-          <div className="space-y-1">
-            {playlistTracks.map((track, i) => (
-              <div
-                key={track.id}
-                className={`flex items-center gap-3 p-2.5 rounded-lg transition-colors ${
-                  playingTrackId === track.id
-                    ? "bg-purple-950/40 border-2 border-purple-800"
-                    : "hover:bg-neutral-800 border-2 border-transparent"
-                }`}
-              >
-                <span className="text-xs text-neutral-600 w-5 text-right flex-shrink-0">
-                  {i + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{track.title}</p>
-                  <p className="text-xs text-neutral-500 truncate">
-                    {track.user.name}
-                  </p>
+      {/* Two Column Layout */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* LEFT COLUMN — 2/3 */}
+          <div className="lg:col-span-2 space-y-6">
+
+            {/* Birdeye Chart */}
+            {coin && (
+              <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-3 border-b border-neutral-800">
+                  <div className="flex items-center gap-3">
+                    <span className="font-bold text-accent">${coin.ticker}</span>
+                    <span className="font-bold">{formatPrice(coin.price)}</span>
+                    <span className={`text-sm font-semibold px-2 py-0.5 rounded-md ${
+                      change >= 0 ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
+                    }`}>
+                      {change >= 0 ? "+" : ""}{change.toFixed(2)}%
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <a href={`https://birdeye.so/token/${coin.mint}?chain=solana`} target="_blank" rel="noopener noreferrer" className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors">Birdeye</a>
+                    <a href={`https://jup.ag/swap/SOL-${coin.mint}`} target="_blank" rel="noopener noreferrer" className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors">Jupiter</a>
+                  </div>
                 </div>
-                {track.duration && (
-                  <span className="text-xs text-neutral-600 flex-shrink-0">
-                    {formatDuration(track.duration)}
-                  </span>
-                )}
-                <button
-                  onClick={() => togglePlay(track.id)}
-                  className={`px-3 py-1 rounded text-xs font-medium transition-colors flex-shrink-0 ${
-                    playingTrackId === track.id
-                      ? "bg-purple-600 text-white"
-                      : "bg-neutral-700 hover:bg-neutral-600 text-neutral-300"
-                  }`}
-                >
-                  {playingTrackId === track.id ? "Stop" : "Play"}
-                </button>
+                <iframe
+                  src={`https://birdeye.so/tv-widget/${coin.mint}?chain=solana&viewMode=pair&chartInterval=1D&chartType=AREA&chartLeftToolbar=hide&theme=dark`}
+                  className="w-full h-[350px] border-0"
+                  title={`${coin.ticker} chart`}
+                  loading="lazy"
+                  allow="clipboard-write"
+                />
               </div>
-            ))}
+            )}
+
+            {/* Audius Playlist */}
+            {playlistTracks.length > 0 && (
+              <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
+                <div className="px-5 py-3 border-b border-neutral-800">
+                  <h2 className="font-semibold">Event Playlist</h2>
+                  <p className="text-xs text-neutral-500">Powered by Audius</p>
+                </div>
+                <div className="p-3 space-y-1">
+                  {playlistTracks.map((track, i) => (
+                    <button
+                      key={track.id}
+                      onClick={() => togglePlay(track.id)}
+                      className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all ${
+                        playingTrackId === track.id
+                          ? "bg-deep/50 border border-brand"
+                          : "hover:bg-neutral-800/70 border border-transparent"
+                      }`}
+                    >
+                      <span className="text-xs text-neutral-600 w-5 text-right flex-shrink-0">
+                        {playingTrackId === track.id ? (
+                          <span className="inline-flex gap-0.5 justify-end">
+                            <span className="w-0.5 h-3 bg-accent rounded-full animate-pulse" />
+                            <span className="w-0.5 h-2 bg-accent rounded-full animate-pulse" style={{ animationDelay: "0.15s" }} />
+                            <span className="w-0.5 h-3 bg-accent rounded-full animate-pulse" style={{ animationDelay: "0.3s" }} />
+                          </span>
+                        ) : (
+                          i + 1
+                        )}
+                      </span>
+                      {track.artwork?.["150x150"] ? (
+                        <img src={track.artwork["150x150"]} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" loading="lazy" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-neutral-800 flex items-center justify-center flex-shrink-0">
+                          <span className="text-neutral-600">&#9835;</span>
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-sm font-medium truncate ${playingTrackId === track.id ? "text-accent" : ""}`}>{track.title}</p>
+                        <p className="text-xs text-neutral-500 truncate">{track.user.name}</p>
+                      </div>
+                      {track.duration && (
+                        <span className="text-xs text-neutral-600 flex-shrink-0">
+                          {formatDuration(track.duration)}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Spotify Embed */}
+            {spotifyEmbedUrl && (
+              <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
+                <div className="px-5 py-3 border-b border-neutral-800">
+                  <h2 className="font-semibold">Spotify Playlist</h2>
+                </div>
+                <iframe
+                  src={spotifyEmbedUrl}
+                  width="100%"
+                  height="352"
+                  frameBorder="0"
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                  loading="lazy"
+                  className="rounded-b-2xl"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT COLUMN — 1/3 (sidebar) */}
+          <div className="space-y-6">
+
+            {/* Creator Coin Stats */}
+            {coin && (
+              <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="font-bold text-accent">${coin.ticker}</span>
+                  <span className="text-xs text-neutral-500 ml-auto">Creator Coin</span>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-xs text-neutral-500">Price</span>
+                    <span className="font-bold text-lg">{formatPrice(coin.price)}</span>
+                  </div>
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-xs text-neutral-500">24h Change</span>
+                    <span className={`font-semibold ${change >= 0 ? "text-green-400" : "text-red-400"}`}>
+                      {change >= 0 ? "+" : ""}{change.toFixed(2)}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-xs text-neutral-500">Market Cap</span>
+                    <span className="font-semibold">${formatNumber(coin.marketCap || 0)}</span>
+                  </div>
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-xs text-neutral-500">Holders</span>
+                    <span className="font-semibold">{(coin.holder || 0).toLocaleString()}</span>
+                  </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-neutral-800 space-y-2">
+                  <a
+                    href={`https://birdeye.so/token/${coin.mint}?chain=solana`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full text-center px-4 py-2.5 bg-accent hover:bg-accent/80 rounded-xl text-sm font-semibold transition-all"
+                  >
+                    Trade on Birdeye
+                  </a>
+                  <a
+                    href={`https://jup.ag/swap/SOL-${coin.mint}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full text-center px-4 py-2.5 bg-neutral-800 hover:bg-neutral-700 rounded-xl text-sm font-semibold transition-all border border-neutral-700"
+                  >
+                    Swap on Jupiter
+                  </a>
+                </div>
+                <div className="mt-3 p-3 rounded-lg bg-yellow-950/20 border border-yellow-800/20">
+                  <p className="text-xs text-yellow-200/70">Hold this coin for VIP access to token-gated events</p>
+                </div>
+              </div>
+            )}
+
+            {/* How to Join */}
+            <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5">
+              <h3 className="font-semibold mb-4">How to Join</h3>
+              <div className="space-y-4">
+                <StepItem number={1} title="Hold the creator coin" description="Your Solana wallet needs the creator's token." />
+                <StepItem number={2} title="Join Discord" description="Collab.Land verifies your holdings." />
+                <StepItem number={3} title="Submit Roblox username" description="Use the bot in Discord to get whitelisted." />
+                <StepItem number={4} title="Join the experience" description="Enter Roblox and enjoy the concert." />
+              </div>
+            </div>
+
+            {/* Artist Profile Link */}
+            {artist && event.audiusUserId && (
+              <Link
+                href={`/artists/${event.audiusUserId}`}
+                className="block rounded-2xl border border-brand/40 bg-deep/20 p-5 hover:border-brand/50 transition-all text-center"
+              >
+                <p className="text-sm font-medium text-accent">
+                  View {artist.name}&apos;s Full Profile &rarr;
+                </p>
+              </Link>
+            )}
           </div>
         </div>
-      )}
-
-      {/* Spotify Embed */}
-      {spotifyEmbedUrl && (
-        <div className="p-6 rounded-2xl border-2 border-neutral-800 bg-neutral-900 shadow-sm mb-6">
-          <h2 className="font-semibold mb-3">Spotify Playlist</h2>
-          <iframe
-            src={spotifyEmbedUrl}
-            width="100%"
-            height="352"
-            frameBorder="0"
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            loading="lazy"
-            className="rounded-xl"
-          />
-        </div>
-      )}
+      </div>
     </main>
   );
 }
 
-function StepItem({
-  number,
-  title,
-  description,
-  action,
-}: {
-  number: number;
-  title: string;
-  description: string;
-  action?: React.ReactNode;
-}) {
+function StepItem({ number, title, description }: { number: number; title: string; description: string }) {
   return (
-    <div className="flex gap-4">
-      <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0 text-sm font-bold">
+    <div className="flex gap-3">
+      <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center flex-shrink-0 text-xs font-bold">
         {number}
       </div>
-      <div className="flex-1 pt-0.5">
+      <div className="pt-0.5">
         <p className="font-medium text-sm">{title}</p>
-        <p className="text-xs text-neutral-400 mt-0.5 mb-2">{description}</p>
-        {action}
+        <p className="text-xs text-neutral-500 mt-0.5">{description}</p>
       </div>
     </div>
   );

@@ -29,6 +29,14 @@ export const robloxWhitelist = pgTable("roblox_whitelist", {
   linkedAt: timestamp("linked_at").defaultNow().notNull(),
 });
 
+export const artistVotes = pgTable("artist_votes", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  audiusUserId: text("audius_user_id").notNull(),
+  voterWallet: text("voter_wallet"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
 export type RobloxWhitelistEntry = typeof robloxWhitelist.$inferSelect;
+export type ArtistVote = typeof artistVotes.$inferSelect;

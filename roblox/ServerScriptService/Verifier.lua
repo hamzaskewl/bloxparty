@@ -1,11 +1,11 @@
 -- Verifier.lua
 -- Place in ServerScriptService
--- Checks if a player is whitelisted via the deadathon API on join
+-- Checks if a player is whitelisted via the bloxparty API on join
 
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 
--- Your deployed deadathon API URL
+-- Your deployed bloxparty API URL
 local API_BASE = "https://your-app.railway.app" -- TODO: Replace with your actual URL
 
 local function checkWhitelist(player)
