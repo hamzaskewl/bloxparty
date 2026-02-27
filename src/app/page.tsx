@@ -304,7 +304,7 @@ export default function Home() {
             Built with
           </p>
           <div className="flex flex-wrap gap-2 justify-center">
-            {["Solana", "Audius API", "Creator Coins", "Phantom", "Roblox", "Discord", "Collab.Land", "Spotify", "Twitch", "Next.js", "Railway"].map((tech) => (
+            {["Solana", "Audius API", "Creator Coins", "Phantom", "Roblox", "Discord", "Collab.Land", "Spotify", "Next.js", "Railway"].map((tech) => (
               <span
                 key={tech}
                 className="px-3 py-1.5 text-xs font-bold glass text-neutral-400 rounded-full hover:bg-white/5 hover:text-neutral-300 transition-all cursor-default"

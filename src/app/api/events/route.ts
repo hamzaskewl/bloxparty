@@ -14,7 +14,6 @@ export async function POST(req: NextRequest) {
       audiusUserId,
       audiusPlaylistId,
       spotifyPlaylistUrl,
-      twitchChannel,
     } = body;
 
     if (!name || !date) {
@@ -34,7 +33,6 @@ export async function POST(req: NextRequest) {
         audiusUserId: audiusUserId || null,
         audiusPlaylistId: audiusPlaylistId || null,
         spotifyPlaylistUrl: spotifyPlaylistUrl || null,
-        twitchChannel: twitchChannel || null,
       })
       .returning();
 

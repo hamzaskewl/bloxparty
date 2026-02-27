@@ -114,8 +114,6 @@ function CreateEventForm() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [eventDate, setEventDate] = useState("");
-  const [twitchChannel, setTwitchChannel] = useState("");
-
   // Playlist
   const [playlistSource, setPlaylistSource] = useState<"audius" | "spotify">("audius");
   const [audiusPlaylistId, setAudiusPlaylistId] = useState("");
@@ -141,7 +139,6 @@ function CreateEventForm() {
 
   const [loading, setLoading] = useState(false);
   const [showPlaylist, setShowPlaylist] = useState(false);
-  const [showExtras, setShowExtras] = useState(false);
 
   // Fetch recommended/trending artists from coins
   useEffect(() => {
@@ -283,7 +280,6 @@ function CreateEventForm() {
           audiusUserId: audiusUserId || undefined,
           audiusPlaylistId: audiusPlaylistId || undefined,
           spotifyPlaylistUrl: spotifyPlaylistUrl || undefined,
-          twitchChannel: twitchChannel || undefined,
         }),
       });
       if (!res.ok) throw new Error("Failed to create event");
@@ -616,32 +612,6 @@ function CreateEventForm() {
             )}
           </div>
 
-          {/* ─── Expandable: Extra options ─── */}
-          <div>
-            <button
-              type="button"
-              onClick={() => setShowExtras(!showExtras)}
-              className="inline-flex items-center gap-2 text-sm text-neutral-400 hover:text-white transition-colors"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${showExtras ? "rotate-90" : ""}`}>
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-              {showExtras ? "Hide extra options" : "More options (Twitch, etc.)"}
-            </button>
-            {showExtras && (
-              <div className="mt-3 pl-1">
-                <label className="block text-sm text-neutral-400 mb-1.5">Twitch Channel</label>
-                <input
-                  type="text"
-                  value={twitchChannel}
-                  onChange={(e) => setTwitchChannel(e.target.value)}
-                  placeholder="your_channel"
-                  className="w-full px-3.5 py-2.5 glass-strong rounded-xl focus:outline-none focus:ring-1 focus:ring-accent/50 transition-all text-sm placeholder:text-neutral-600"
-                />
-              </div>
-            )}
-          </div>
-
           {/* Submit */}
           <button
             onClick={handleSubmit}
@@ -755,8 +725,9 @@ function EventList() {
             {(event.audiusPlaylistId || event.spotifyPlaylistUrl) && (
               <span className="text-[10px] px-2 py-0.5 bg-pop/10 text-pop rounded-full border border-pop/20 font-medium">Music</span>
             )}
-            {event.twitchChannel && (
+            {false && (
               <span className="text-[10px] px-2 py-0.5 bg-brand/10 text-accent rounded-full border border-brand/20 font-medium">Live</span>
+
             )}
           </div>
         </Link>

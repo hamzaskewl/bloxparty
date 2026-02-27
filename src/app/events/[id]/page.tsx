@@ -263,16 +263,6 @@ export default function EventDetailPage() {
                     Open Roblox
                   </a>
                 )}
-                {event.twitchChannel && (
-                  <a
-                    href={`https://twitch.tv/${event.twitchChannel}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-5 py-2.5 bg-brand hover:bg-accent rounded-xl text-sm font-semibold transition-all border border-brand"
-                  >
-                    Watch on Twitch
-                  </a>
-                )}
                 {artist && (
                   <a
                     href={`https://audius.co/${artist.handle}`}
