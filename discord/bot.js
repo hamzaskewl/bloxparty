@@ -138,10 +138,27 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
   // ─── /unlink ───
   if (commandName === "unlink") {
-    await interaction.reply({
-      content: "To unlink, contact an admin. Your whitelist entry will be removed.",
-      ephemeral: true,
-    });
+    await interaction.deferReply({ ephemeral: true });
+
+    try {
+      const res = await fetch(`${API_BASE}/api/roblox/whitelist`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ discordUserId: user.id }),
+      });
+
+      if (res.status === 404) {
+        return interaction.editReply("You don't have a linked Roblox account.");
+      }
+      if (!res.ok) {
+        return interaction.editReply("Something went wrong. Try again later.");
+      }
+
+      return interaction.editReply("Your Roblox account has been unlinked. You'll need to `/link` again to rejoin.");
+    } catch (err) {
+      console.error("[Bot] Unlink error:", err);
+      return interaction.editReply("Something went wrong reaching the API. Try again later.");
+    }
   }
 });
 
