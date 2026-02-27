@@ -252,8 +252,8 @@ export default function ArtistProfilePage() {
                   disabled={hasVoted}
                   className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all border ${
                     hasVoted
-                      ? "bg-deep/40 border-brand/30 text-pop/60 cursor-not-allowed"
-                      : "bg-pop hover:bg-pop/80 border-pop active:scale-95"
+                      ? "bg-deep/40 border-brand/30 text-neutral-400 cursor-not-allowed"
+                      : "bg-pop hover:bg-pop/80 border-pop text-black active:scale-95"
                   }`}
                 >
                   {hasVoted ? `Voted (${votes})` : `Vote for Concert (${votes})`}
@@ -312,7 +312,7 @@ export default function ArtistProfilePage() {
                   </div>
                 </div>
                 <iframe
-                  src={`https://birdeye.so/tv-widget/${coin.mint}?chain=solana&viewMode=pair&chartInterval=1D&chartType=AREA&chartLeftToolbar=hide&theme=dark`}
+                  src={`https://birdeye.so/tv-widget/${coin.mint}?chain=solana&viewMode=pair&chartInterval=1D&chartType=CANDLE&chartLeftToolbar=hide&theme=dark`}
                   className="w-full h-[400px] border-0"
                   title={`${coin.ticker} chart`}
                   loading="lazy"
@@ -462,8 +462,8 @@ export default function ArtistProfilePage() {
                 disabled={hasVoted}
                 className={`w-full py-3 rounded-xl font-semibold transition-all text-sm ${
                   hasVoted
-                    ? "bg-deep/30 text-pop/60 border border-brand/30 cursor-not-allowed"
-                    : "bg-pop hover:bg-pop/80 border border-pop active:scale-[0.98]"
+                    ? "bg-deep/30 text-neutral-400 border border-brand/30 cursor-not-allowed"
+                    : "bg-pop hover:bg-pop/80 border border-pop text-black active:scale-[0.98]"
                 }`}
               >
                 {hasVoted ? "Already Voted" : "Vote"}

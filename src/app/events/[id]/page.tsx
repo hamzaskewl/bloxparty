@@ -11,7 +11,7 @@ const AUDIUS_HOST =
   "https://discoveryprovider.audius.co";
 
 const DISCORD_INVITE =
-  process.env.NEXT_PUBLIC_DISCORD_INVITE || "https://discord.gg/bloxparty";
+  process.env.NEXT_PUBLIC_DISCORD_INVITE || "https://discord.gg/sDawtbUm";
 
 const ROBLOX_PLACE_ID =
   process.env.NEXT_PUBLIC_ROBLOX_PLACE_ID || "";
@@ -305,7 +305,7 @@ export default function EventDetailPage() {
                   </div>
                 </div>
                 <iframe
-                  src={`https://birdeye.so/tv-widget/${coin.mint}?chain=solana&viewMode=pair&chartInterval=1D&chartType=AREA&chartLeftToolbar=hide&theme=dark`}
+                  src={`https://birdeye.so/tv-widget/${coin.mint}?chain=solana&viewMode=pair&chartInterval=1D&chartType=CANDLE&chartLeftToolbar=hide&theme=dark`}
                   className="w-full h-[350px] border-0"
                   title={`${coin.ticker} chart`}
                   loading="lazy"
