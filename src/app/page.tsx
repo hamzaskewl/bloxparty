@@ -132,6 +132,15 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <a
+              href={`https://www.roblox.com/games/${process.env.NEXT_PUBLIC_ROBLOX_PLACE_ID || "77480467395158"}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-green-600 hover:bg-green-500 text-white font-bold text-lg transition-all border border-green-500"
+            >
+              <CubeIcon />
+              Join on Roblox
+            </a>
             <Link
               href="/artists"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-brand hover:bg-accent text-white font-bold text-lg transition-all"
@@ -144,12 +153,6 @@ export default function Home() {
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl glass-strong text-white font-bold text-lg transition-all hover:bg-white/10"
             >
               Browse Events
-            </Link>
-            <Link
-              href="/events?create=true"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl glass-strong text-white font-bold text-lg transition-all hover:bg-white/10"
-            >
-              Create Event
             </Link>
           </div>
         </div>
