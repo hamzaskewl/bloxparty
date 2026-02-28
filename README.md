@@ -51,12 +51,12 @@ Fans hold a creator coin → Collab.Land verifies on Discord → bot whitelists 
 
 ```mermaid
 flowchart LR
-    A["Fan holds\n$YAK coin"] --> B["Joins Discord"]
-    B --> C["Collab.Land verifies\nSolana wallet"]
-    C --> D["Gets 'kodakBLOX'\nrole"]
-    D --> E["Runs /link\nRoblox username"]
-    E --> F["Bot calls\nwhitelist API"]
-    F --> G["Joins Roblox\nconcert"]
+    A["Fan holds<br/>$YAK coin"] --> B["Joins Discord"]
+    B --> C["Collab.Land verifies<br/>Solana wallet"]
+    C --> D["Gets 'kodakBLOX'<br/>role"]
+    D --> E["Runs /link<br/>Roblox username"]
+    E --> F["Bot calls<br/>whitelist API"]
+    F --> G["Joins Roblox<br/>concert"]
 
     style A fill:#261CC1,stroke:#3A9AFF,color:#fff
     style B fill:#5865F2,stroke:#3A9AFF,color:#fff
@@ -72,28 +72,28 @@ flowchart LR
 ```mermaid
 flowchart TB
     subgraph WEB["Web App — Next.js"]
-        LP[Landing Page\nCoin Ticker + Featured Artists]
-        AD[Artist Discovery\nSort by MC / Volume / Votes]
-        AP[Artist Profiles\nCharts + Tracks + Coin Stats]
-        EC[Event Creation\nQuick Fill + Track Preview]
-        ED[Event Detail\nPlaylist + Coin Card + Links]
-        MP[Music Player\n8 Genres + Search + Streaming]
+        LP[Landing Page<br/>Coin Ticker + Featured Artists]
+        AD[Artist Discovery<br/>Sort by MC / Volume / Votes]
+        AP[Artist Profiles<br/>Charts + Tracks + Coin Stats]
+        EC[Event Creation<br/>Quick Fill + Track Preview]
+        ED[Event Detail<br/>Playlist + Coin Card + Links]
+        MP[Music Player<br/>8 Genres + Search + Streaming]
     end
 
     subgraph AUDIUS["Audius API — 14 Endpoints"]
-        COINS["/coins\nPrices, MC, Volume, Holders"]
-        USERS["/users\nProfiles, Tracks, Supporters"]
-        STREAM["/tracks/stream\nAudio Streaming"]
+        COINS["/coins<br/>Prices, MC, Volume, Holders"]
+        USERS["/users<br/>Profiles, Tracks, Supporters"]
+        STREAM["/tracks/stream<br/>Audio Streaming"]
     end
 
     subgraph DISCORD["Discord"]
-        CL[Collab.Land\nSPL Token Verification]
-        BOT[Bloxparty Bot\n/link  /status  /unlink]
+        CL[Collab.Land<br/>SPL Token Verification]
+        BOT[Bloxparty Bot<br/>/link  /status  /unlink]
     end
 
     subgraph ROBLOX["Roblox Game"]
-        VER[Verifier.lua\nWhitelist Check on Join]
-        AUD[AudioManager.lua\nPlaylist Playback]
+        VER[Verifier.lua<br/>Whitelist Check on Join]
+        AUD[AudioManager.lua<br/>Playlist Playback]
     end
 
     subgraph DB["PostgreSQL"]
