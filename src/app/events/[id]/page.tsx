@@ -191,11 +191,11 @@ export default function EventDetailPage() {
       <Nav />
 
       {/* Hero Banner */}
-      <div className="bg-deep/30 pt-24 pb-8 px-4">
-        <div className="max-w-7xl mx-auto">
+      <div className="bg-deep/30 pt-24 pb-6 px-4">
+        <div className="max-w-6xl mx-auto">
           <BackLink href="/events" label="Events" />
 
-          <div className="flex flex-col md:flex-row items-start gap-6 mt-4">
+          <div className="flex flex-col md:flex-row items-start gap-5 mt-3">
             {/* Artist avatar */}
             {artist && (
               <div className="flex-shrink-0">
@@ -203,21 +203,21 @@ export default function EventDetailPage() {
                   <img
                     src={artist.profile_picture["480x480"]}
                     alt={artist.name}
-                    className="w-28 h-28 md:w-36 md:h-36 rounded-2xl object-cover shadow-2xl shadow-deep/30"
+                    className="w-24 h-24 md:w-32 md:h-32 rounded-xl object-cover shadow-xl shadow-deep/30"
                     loading="eager"
                   />
                 ) : (
-                  <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl bg-deep flex items-center justify-center shadow-2xl">
-                    <span className="text-accent text-4xl font-bold">{artist.name[0]}</span>
+                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-xl bg-deep flex items-center justify-center shadow-xl">
+                    <span className="text-accent text-3xl font-bold">{artist.name[0]}</span>
                   </div>
                 )}
               </div>
             )}
 
             <div className="flex-1 min-w-0">
-              <h1 className="text-3xl md:text-5xl font-bold tracking-tight">{event.name}</h1>
+              <h1 className="text-2xl md:text-4xl font-bold tracking-tight">{event.name}</h1>
               {event.description && (
-                <p className="text-neutral-400 text-lg mt-2 max-w-2xl">{event.description}</p>
+                <p className="text-neutral-400 mt-1.5 max-w-2xl">{event.description}</p>
               )}
               <p className="text-sm text-neutral-500 mt-2">
                 {new Date(event.date).toLocaleDateString(undefined, {
@@ -244,12 +244,12 @@ export default function EventDetailPage() {
               )}
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3 mt-5">
+              <div className="flex flex-wrap gap-2 mt-4">
                 <a
                   href={DISCORD_INVITE}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-5 py-2.5 bg-brand hover:bg-accent rounded-xl text-sm font-semibold transition-all border border-brand"
+                  className="px-4 py-2 bg-brand hover:bg-accent rounded-xl text-sm font-semibold transition-all border border-brand"
                 >
                   Join Discord
                 </a>
@@ -258,7 +258,7 @@ export default function EventDetailPage() {
                     href={`https://www.roblox.com/games/${ROBLOX_PLACE_ID}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-5 py-2.5 bg-green-600 hover:bg-green-500 rounded-xl text-sm font-semibold transition-all border border-green-500"
+                    className="px-4 py-2 bg-green-600 hover:bg-green-500 rounded-xl text-sm font-semibold transition-all border border-green-500"
                   >
                     Open Roblox
                   </a>
@@ -268,7 +268,7 @@ export default function EventDetailPage() {
                     href={`https://audius.co/${artist.handle}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-5 py-2.5 bg-neutral-800 hover:bg-neutral-700 rounded-xl text-sm font-semibold transition-all border border-neutral-700"
+                    className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 rounded-xl text-sm font-semibold transition-all border border-neutral-700"
                   >
                     Audius Profile
                   </a>
@@ -280,16 +280,16 @@ export default function EventDetailPage() {
       </div>
 
       {/* Two Column Layout */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
           {/* LEFT COLUMN — 2/3 */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-5">
 
             {/* Birdeye Chart */}
             {coin && (
-              <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-3 border-b border-neutral-800">
+              <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-neutral-800">
                   <div className="flex items-center gap-3">
                     <span className="font-bold text-accent">${coin.ticker}</span>
                     <span className="font-bold">{formatPrice(coin.price)}</span>
@@ -316,8 +316,8 @@ export default function EventDetailPage() {
 
             {/* Audius Playlist */}
             {playlistTracks.length > 0 && (
-              <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
-                <div className="px-5 py-3 border-b border-neutral-800">
+              <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-neutral-800">
                   <h2 className="font-semibold">Event Playlist</h2>
                   <p className="text-xs text-neutral-500">Powered by Audius</p>
                 </div>
@@ -367,8 +367,8 @@ export default function EventDetailPage() {
 
             {/* Spotify Embed */}
             {spotifyEmbedUrl && (
-              <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
-                <div className="px-5 py-3 border-b border-neutral-800">
+              <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-neutral-800">
                   <h2 className="font-semibold">Spotify Playlist</h2>
                 </div>
                 <iframe
@@ -385,11 +385,11 @@ export default function EventDetailPage() {
           </div>
 
           {/* RIGHT COLUMN — 1/3 (sidebar) */}
-          <div className="space-y-6">
+          <div className="space-y-4">
 
             {/* Creator Coin Stats */}
             {coin && (
-              <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5">
+              <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-4">
                 <div className="flex items-center gap-2 mb-4">
                   <span className="font-bold text-accent">${coin.ticker}</span>
                   <span className="text-xs text-neutral-500 ml-auto">Creator Coin</span>
@@ -439,9 +439,9 @@ export default function EventDetailPage() {
             )}
 
             {/* How to Join */}
-            <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5">
-              <h3 className="font-semibold mb-4">How to Join</h3>
-              <div className="space-y-4">
+            <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-4">
+              <h3 className="font-semibold text-sm mb-3">How to Join</h3>
+              <div className="space-y-3">
                 <StepItem number={1} title="Hold the creator coin" description="Your Solana wallet needs the creator's token." />
                 <StepItem number={2} title="Join Discord" description="Collab.Land verifies your holdings." />
                 <StepItem number={3} title="Submit Roblox username" description="Use the bot in Discord to get whitelisted." />
@@ -453,7 +453,7 @@ export default function EventDetailPage() {
             {artist && event.audiusUserId && (
               <Link
                 href={`/artists/${event.audiusUserId}`}
-                className="block rounded-2xl border border-brand/40 bg-deep/20 p-5 hover:border-brand/50 transition-all text-center"
+                className="block rounded-xl border border-brand/40 bg-deep/20 p-4 hover:border-brand/50 transition-all text-center"
               >
                 <p className="text-sm font-medium text-accent">
                   View {artist.name}&apos;s Full Profile &rarr;
@@ -469,13 +469,13 @@ export default function EventDetailPage() {
 
 function StepItem({ number, title, description }: { number: number; title: string; description: string }) {
   return (
-    <div className="flex gap-3">
-      <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center flex-shrink-0 text-xs font-bold">
+    <div className="flex gap-2.5">
+      <div className="w-6 h-6 rounded-full bg-brand flex items-center justify-center flex-shrink-0 text-[10px] font-bold">
         {number}
       </div>
       <div className="pt-0.5">
-        <p className="font-medium text-sm">{title}</p>
-        <p className="text-xs text-neutral-500 mt-0.5">{description}</p>
+        <p className="font-medium text-xs">{title}</p>
+        <p className="text-[10px] text-neutral-500 mt-0.5">{description}</p>
       </div>
     </div>
   );

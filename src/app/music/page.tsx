@@ -200,12 +200,12 @@ export default function MusicPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search artists, tracks..."
-              className="flex-1 px-4 py-2.5 bg-neutral-900 border-2 border-neutral-800 rounded-xl focus:outline-none focus:border-accent/50 focus:bg-neutral-800 transition-all text-sm"
+              className="flex-1 px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl focus:outline-none focus:border-accent/50 focus:bg-neutral-800 transition-all text-sm"
             />
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2.5 bg-brand hover:bg-accent disabled:opacity-50 rounded-xl font-medium transition-all text-sm border-2 border-brand shadow-md hover:shadow-lg hover:scale-[1.02]"
+              className="px-4 py-2.5 bg-brand hover:bg-accent disabled:opacity-50 rounded-xl font-medium transition-all text-sm border border-brand"
             >
               Search
             </button>
@@ -213,7 +213,7 @@ export default function MusicPage() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortBy)}
-            className="px-3 py-2.5 bg-neutral-900 border-2 border-neutral-800 rounded-xl text-sm text-neutral-300 focus:outline-none focus:border-accent/50 transition-all"
+            className="px-3 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-sm text-neutral-300 focus:outline-none focus:border-accent/50 transition-all"
           >
             <option value="default">Trending</option>
             <option value="plays">Most Plays</option>
@@ -227,8 +227,8 @@ export default function MusicPage() {
             onClick={() => loadTrending()}
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
               activeTab === "trending"
-                ? "bg-brand text-white shadow-sm border-2 border-brand"
-                : "bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200 border-2 border-neutral-800 hover:border-accent/40"
+                ? "bg-brand text-white shadow-sm border border-brand"
+                : "bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200 border border-neutral-800 hover:border-accent/40"
             }`}
           >
             All Trending
@@ -239,8 +239,8 @@ export default function MusicPage() {
               onClick={() => loadTrending(genre)}
               className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
                 selectedGenre === genre
-                  ? "bg-brand text-white shadow-sm border-2 border-brand"
-                  : "bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200 border-2 border-neutral-800 hover:border-accent/40"
+                  ? "bg-brand text-white shadow-sm border border-brand"
+                  : "bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200 border border-neutral-800 hover:border-accent/40"
               }`}
             >
               {genre}
@@ -263,7 +263,7 @@ export default function MusicPage() {
 
         {/* Track header */}
         {!loading && tracks.length > 0 && (
-          <div className="flex items-center gap-3 px-3 py-2 text-xs text-neutral-500 border-b-2 border-neutral-800 mb-1">
+          <div className="flex items-center gap-3 px-3 py-2 text-xs text-neutral-500 border-b border-neutral-800 mb-1">
             <span className="w-8 text-right">#</span>
             <span className="w-10" />
             <span className="flex-1">Title</span>
@@ -281,8 +281,8 @@ export default function MusicPage() {
               onClick={() => playTrack(track)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all cursor-pointer group ${
                 playingTrackId === track.id
-                  ? "bg-deep/40 border-2 border-brand/50"
-                  : "hover:bg-neutral-900 border-2 border-transparent hover:border-neutral-800"
+                  ? "bg-deep/40 border border-brand/50"
+                  : "hover:bg-neutral-900 border border-transparent hover:border-neutral-800"
               }`}
             >
               {/* Number / playing indicator */}
@@ -363,7 +363,7 @@ export default function MusicPage() {
 
       {/* Now playing bar - fixed bottom */}
       {playingTrack && (
-        <div className="fixed bottom-0 left-0 w-full bg-neutral-950/90 backdrop-blur-xl border-t-2 border-neutral-800 z-50">
+        <div className="fixed bottom-0 left-0 w-full bg-neutral-950/90 backdrop-blur-xl border-t border-neutral-800 z-50">
           {/* Progress bar */}
           <div
             className="h-1 bg-neutral-800 cursor-pointer group"

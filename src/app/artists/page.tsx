@@ -177,13 +177,13 @@ export default function ArtistsPage() {
     <main className="min-h-screen">
       <Nav />
 
-      <div className="max-w-7xl mx-auto px-4 pt-24 pb-16">
+      <div className="max-w-6xl mx-auto px-4 pt-24 pb-16">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-6">
           <div>
-            <h1 className="text-4xl font-bold tracking-tight">Discover Artists</h1>
-            <p className="text-neutral-500 mt-1">
-              Explore Audius creators with coins. Vote for who performs next.
+            <h1 className="text-3xl font-bold tracking-tight">Discover Artists</h1>
+            <p className="text-neutral-500 text-sm mt-0.5">
+              Audius creators with coins. Vote for who performs next.
             </p>
           </div>
           <div className="flex gap-2">
@@ -242,7 +242,7 @@ export default function ArtistsPage() {
         )}
 
         {/* Sort Tabs */}
-        <div className="flex gap-1 mb-6 bg-neutral-900/50 p-1 rounded-xl w-fit border border-neutral-800">
+        <div className="flex gap-1 mb-5 bg-neutral-900/50 p-1 rounded-lg w-fit border border-neutral-800">
           {(
             [
               { key: "market_cap", label: "Market Cap" },
@@ -287,22 +287,22 @@ export default function ArtistsPage() {
               return (
                 <div
                   key={a.user.id}
-                  className="group rounded-2xl border border-neutral-800 bg-neutral-900/50 hover:bg-neutral-800/50 hover:border-neutral-700 transition-all duration-200 overflow-hidden"
+                  className="group rounded-xl border border-neutral-800 bg-neutral-900/50 hover:bg-neutral-800/50 hover:border-neutral-700 transition-all duration-200 overflow-hidden"
                 >
                   {/* Top section: avatar + info */}
-                  <div className="p-5 pb-4">
-                    <div className="flex items-center gap-4">
+                  <div className="p-4 pb-3">
+                    <div className="flex items-center gap-3">
                       <Link href={`/artists/${a.user.id}`} className="flex-shrink-0">
                         {a.user.profile_picture?.["150x150"] ? (
                           <img
                             src={a.user.profile_picture["150x150"]}
                             alt={a.user.name}
-                            className="w-14 h-14 rounded-full object-cover"
+                            className="w-11 h-11 rounded-full object-cover"
                             loading="lazy"
                           />
                         ) : (
-                          <div className="w-14 h-14 rounded-full bg-deep flex items-center justify-center">
-                            <span className="text-accent text-xl font-bold">{a.user.name[0]}</span>
+                          <div className="w-11 h-11 rounded-full bg-deep flex items-center justify-center">
+                            <span className="text-accent text-base font-bold">{a.user.name[0]}</span>
                           </div>
                         )}
                       </Link>
@@ -319,8 +319,8 @@ export default function ArtistsPage() {
                   </div>
 
                   {/* Coin stats row */}
-                  <div className="px-5 pb-4">
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-neutral-950/50 border border-neutral-800">
+                  <div className="px-4 pb-3">
+                    <div className="flex items-center gap-3 p-2.5 rounded-lg bg-neutral-950/50 border border-neutral-800">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-accent text-sm">${a.coin.ticker}</span>

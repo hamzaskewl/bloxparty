@@ -180,60 +180,60 @@ export default function ArtistProfilePage() {
       <Nav />
 
       {/* Hero Banner */}
-      <div className="bg-deep/40 pt-24 pb-8 px-4">
-        <div className="max-w-7xl mx-auto">
+      <div className="bg-deep/40 pt-24 pb-6 px-4">
+        <div className="max-w-6xl mx-auto">
           <BackLink href="/artists" label="Artists" />
 
-          <div className="flex flex-col md:flex-row items-start gap-6 mt-4">
+          <div className="flex flex-col md:flex-row items-start gap-5 mt-3">
             {/* Avatar */}
             <div className="relative flex-shrink-0">
               {user.profile_picture?.["480x480"] ? (
                 <img
                   src={user.profile_picture["480x480"]}
                   alt={user.name}
-                  className="w-32 h-32 md:w-40 md:h-40 rounded-2xl object-cover shadow-2xl shadow-deep/30"
+                  className="w-24 h-24 md:w-32 md:h-32 rounded-xl object-cover shadow-xl shadow-deep/30"
                   loading="eager"
                 />
               ) : (
-                <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl bg-deep flex items-center justify-center shadow-2xl">
-                  <span className="text-accent text-5xl font-bold">{user.name[0]}</span>
+                <div className="w-24 h-24 md:w-32 md:h-32 rounded-xl bg-deep flex items-center justify-center shadow-xl">
+                  <span className="text-accent text-4xl font-bold">{user.name[0]}</span>
                 </div>
               )}
             </div>
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <h1 className="text-3xl md:text-5xl font-bold tracking-tight">{user.name}</h1>
-              <p className="text-neutral-400 text-lg mt-1">@{user.handle}</p>
+              <h1 className="text-2xl md:text-4xl font-bold tracking-tight">{user.name}</h1>
+              <p className="text-neutral-400 mt-0.5">@{user.handle}</p>
               {user.bio && (
-                <p className="text-sm text-neutral-500 mt-3 max-w-2xl line-clamp-2">{user.bio}</p>
+                <p className="text-sm text-neutral-500 mt-2 max-w-2xl line-clamp-2">{user.bio}</p>
               )}
 
               {/* Stats Row */}
-              <div className="flex flex-wrap gap-6 mt-4">
+              <div className="flex flex-wrap gap-5 mt-3">
                 <div>
-                  <p className="text-2xl font-bold">{formatNumber(user.follower_count)}</p>
-                  <p className="text-xs text-neutral-500">Followers</p>
+                  <p className="text-xl font-bold">{formatNumber(user.follower_count)}</p>
+                  <p className="text-[10px] text-neutral-500">Followers</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{user.track_count}</p>
-                  <p className="text-xs text-neutral-500">Tracks</p>
+                  <p className="text-xl font-bold">{user.track_count}</p>
+                  <p className="text-[10px] text-neutral-500">Tracks</p>
                 </div>
                 {coin && (
                   <div>
-                    <p className="text-2xl font-bold">{formatNumber(coin.holder ?? coin.holder_count ?? 0)}</p>
-                    <p className="text-xs text-neutral-500">Coin Holders</p>
+                    <p className="text-xl font-bold">{formatNumber(coin.holder ?? coin.holder_count ?? 0)}</p>
+                    <p className="text-[10px] text-neutral-500">Coin Holders</p>
                   </div>
                 )}
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3 mt-5">
+              <div className="flex flex-wrap gap-2 mt-4">
                 <a
                   href={`https://audius.co/${user.handle}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-5 py-2.5 bg-brand hover:bg-accent rounded-xl text-sm font-semibold transition-all border border-brand"
+                  className="px-4 py-2 bg-brand hover:bg-accent rounded-xl text-sm font-semibold transition-all border border-brand"
                 >
                   View on Audius
                 </a>
@@ -242,7 +242,7 @@ export default function ArtistProfilePage() {
                     href={`https://birdeye.so/token/${coin.mint}?chain=solana`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-5 py-2.5 bg-accent hover:bg-accent/80 rounded-xl text-sm font-semibold transition-all border border-accent"
+                    className="px-4 py-2 bg-accent hover:bg-accent/80 rounded-xl text-sm font-semibold transition-all border border-accent"
                   >
                     Buy ${coin.ticker}
                   </a>
@@ -250,7 +250,7 @@ export default function ArtistProfilePage() {
                 <button
                   onClick={handleVote}
                   disabled={hasVoted}
-                  className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all border ${
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${
                     hasVoted
                       ? "bg-deep/40 border-brand/30 text-neutral-400 cursor-not-allowed"
                       : "bg-pop hover:bg-pop/80 border-pop text-black active:scale-95"
@@ -265,19 +265,19 @@ export default function ArtistProfilePage() {
       </div>
 
       {/* Two Column Layout */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
           {/* LEFT COLUMN — 2/3 width */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-5">
 
             {/* Birdeye Chart */}
             {coin && (
-              <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-3 border-b border-neutral-800">
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg font-bold text-accent">${coin.ticker}</span>
-                    <span className="text-lg font-bold">{formatPrice(coin.price)}</span>
+              <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-neutral-800">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-accent">${coin.ticker}</span>
+                    <span className="font-bold">{formatPrice(coin.price)}</span>
                     <span className={`text-sm font-semibold px-2 py-0.5 rounded-md ${
                       change >= 0 ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
                     }`}>
@@ -313,7 +313,7 @@ export default function ArtistProfilePage() {
                 </div>
                 <iframe
                   src={`https://birdeye.so/tv-widget/${coin.mint}?chain=solana&viewMode=pair&chartInterval=1D&chartType=CANDLE&chartLeftToolbar=hide&theme=dark`}
-                  className="w-full h-[400px] border-0"
+                  className="w-full h-[350px] border-0"
                   title={`${coin.ticker} chart`}
                   loading="lazy"
                   allow="clipboard-write"
@@ -324,13 +324,13 @@ export default function ArtistProfilePage() {
             {/* Tracks */}
             {tracks.length > 0 && (
               <div>
-                <h2 className="text-xl font-bold mb-4">Tracks</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <h2 className="text-lg font-bold mb-3">Tracks</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {tracks.map((track) => (
                     <button
                       key={track.id}
                       onClick={() => togglePlay(track.id)}
-                      className={`group relative flex gap-4 p-4 rounded-xl border text-left transition-all duration-200 ${
+                      className={`group relative flex gap-3 p-3 rounded-xl border text-left transition-all duration-200 ${
                         playingTrackId === track.id
                           ? "bg-deep/50 border-brand shadow-lg shadow-deep/20"
                           : "bg-neutral-900/50 border-neutral-800 hover:bg-neutral-800/70 hover:border-neutral-700"
@@ -342,12 +342,12 @@ export default function ArtistProfilePage() {
                           <img
                             src={track.artwork["480x480"] || track.artwork["150x150"]}
                             alt={track.title}
-                            className="w-20 h-20 rounded-lg object-cover"
+                            className="w-16 h-16 rounded-lg object-cover"
                             loading="lazy"
                           />
                         ) : (
-                          <div className="w-20 h-20 rounded-lg bg-neutral-800 flex items-center justify-center">
-                            <span className="text-neutral-600 text-2xl">&#9835;</span>
+                          <div className="w-16 h-16 rounded-lg bg-neutral-800 flex items-center justify-center">
+                            <span className="text-neutral-600 text-xl">&#9835;</span>
                           </div>
                         )}
                         {/* Play overlay */}
@@ -392,11 +392,11 @@ export default function ArtistProfilePage() {
           </div>
 
           {/* RIGHT COLUMN — 1/3 width (sidebar) */}
-          <div className="space-y-6">
+          <div className="space-y-4">
 
             {/* Coin Stats Card */}
             {coin && (
-              <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5">
+              <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-4">
                 <div className="flex items-center gap-2 mb-4">
                   {coin.logo_uri && (
                     <img src={coin.logo_uri} alt="" className="w-6 h-6 rounded-full" />
@@ -452,9 +452,9 @@ export default function ArtistProfilePage() {
             )}
 
             {/* Vote Card */}
-            <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5">
-              <h3 className="font-semibold mb-3">Vote for Concert</h3>
-              <p className="text-xs text-neutral-500 mb-4">
+            <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-4">
+              <h3 className="font-semibold text-sm mb-2">Vote for Concert</h3>
+              <p className="text-xs text-neutral-500 mb-3">
                 Vote for {user.name} to perform at the next token-gated event.
               </p>
               <button
@@ -477,7 +477,7 @@ export default function ArtistProfilePage() {
             {events.length > 0 && (
               <Link
                 href={`/events/${events[0].id}`}
-                className="block rounded-2xl border border-green-800/50 bg-green-950/20 p-5 hover:border-green-600/50 transition-all group"
+                className="block rounded-xl border border-green-800/50 bg-green-950/20 p-4 hover:border-green-600/50 transition-all group"
               >
                 <p className="text-green-400 font-semibold text-sm">Upcoming Event</p>
                 <p className="text-white font-medium mt-1">{events[0].name}</p>
