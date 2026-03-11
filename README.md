@@ -64,7 +64,7 @@ flowchart TB
 
     subgraph DISCORD["Discord"]
         CL[Collab.Land]
-        BOT[/link /status /unlink]
+        BOT["/link /status /unlink"]
     end
 
     subgraph ROBLOX["Roblox"]
