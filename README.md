@@ -1,4 +1,6 @@
-# bloxparty
+# bloxparty 
+
+**Solana Graveyard Hackathon · 🏆$1,000 Winner - Audius API Track 🏆
 
 **Token-Gated Concerts on Roblox, Powered by Audius**
 
